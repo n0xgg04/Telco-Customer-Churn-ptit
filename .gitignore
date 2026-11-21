@@ -2,11 +2,8 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
-data/raw/*.csv
-data/processed/*.csv
-outputs/figures/*
-outputs/tables/*
-outputs/models/*
-outputs/metrics.json
 outputs/predictions.csv
 !outputs/**/.gitkeep
+outputs/runs/
+# Lần huấn luyện và mô hình đang chọn là trạng thái cục bộ của từng máy
+outputs/models/active.json

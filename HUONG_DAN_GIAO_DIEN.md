@@ -1,25 +1,25 @@
 # Hướng dẫn đọc và sử dụng Telco Churn
 
-Dashboard giúp bạn trả lời ba câu hỏi: dữ liệu có gì, mô hình hoạt động ra sao và một khách hàng mới được mô hình chấm điểm như thế nào. Menu bên trái có năm mục. Nên đọc theo thứ tự **Tổng quan → Khám phá dữ liệu → Đánh giá mô hình → Dự đoán Churn**; dùng mục **Hướng dẫn sử dụng** để tra cứu.
+Dashboard giúp bạn trả lời ba câu hỏi: dữ liệu có gì, mô hình hoạt động ra sao và một khách hàng mới được mô hình chấm điểm như thế nào. Menu bên trái có năm mục. Nên đọc theo thứ tự **Mô tả dữ liệu → Thống kê mô tả → Kỹ thuật khai phá → 5. Dự đoán**; dùng mục **Hướng dẫn sử dụng** để tra cứu.
 
 ## 1. Phân biệt số liệu thực tế và dự đoán
 
 **Churn** là việc khách hàng rời bỏ dịch vụ. Trong dữ liệu IBM, `Churn=Yes` là khách đã rời bỏ và `Churn=No` là khách ở lại. Đây là nhãn thực tế được ghi nhận trong bộ dữ liệu.
 
-Các trang Tổng quan và Khám phá dữ liệu thống kê những nhãn này. Trang Đánh giá mô hình đối chiếu dự đoán với nhãn trên tập kiểm tra. Trang Dự đoán Churn chấm điểm hồ sơ bạn nhập, chưa biết kết quả thực tế của khách hàng mới.
+Các trang Mô tả dữ liệu và Thống kê mô tả thống kê những nhãn này. Trang Kỹ thuật khai phá đối chiếu dự đoán với nhãn trên tập kiểm tra. Trang 5. Dự đoán chấm điểm hồ sơ bạn nhập, chưa biết kết quả thực tế của khách hàng mới.
 
 Một dòng dữ liệu tương ứng một khách hàng; `customerID` chỉ là mã nhận diện và không được dùng làm đặc trưng dự đoán. Dữ liệu là ảnh chụp một thời điểm, không cung cấp lịch sử đủ để dự báo khách sẽ rời bỏ sau bao nhiêu ngày/tháng.
 
-## 2. Mục Tổng quan
+## 2. Mục Mô tả dữ liệu
 
 ### Các thẻ số liệu
 
 - **Khách hàng hợp lệ:** số dòng còn lại sau làm sạch. Với dữ liệu hiện tại là 7.032.
 - **Đã rời bỏ:** số khách có nhãn thực tế `Yes`. Với dữ liệu hiện tại là 1.869.
 - **Tỷ lệ rời bỏ:** số khách đã rời bỏ chia tổng số khách hợp lệ. Hiện tại khoảng 26,6%.
-- **Recall mô hình:** khả năng phát hiện khách rời bỏ của Logistic điều chỉnh trên tập kiểm tra. Hiện tại khoảng 75,9%; đây là chỉ số mô hình, không phải tỷ lệ rời bỏ của dữ liệu.
+- **Recall mô hình:** khả năng phát hiện khách rời bỏ của Hồi quy logistic (sau điều chỉnh) trên tập kiểm tra. Hiện tại khoảng 75,9%; đây là chỉ số mô hình, không phải tỷ lệ rời bỏ của dữ liệu.
 
-Các thẻ ở Tổng quan dùng toàn bộ dữ liệu đã làm sạch. Bộ lọc của mục Khám phá dữ liệu không thay đổi các thẻ này.
+Các thẻ ở Mô tả dữ liệu dùng toàn bộ dữ liệu đã làm sạch. Bộ lọc của mục Thống kê mô tả không thay đổi các thẻ này.
 
 ### Chất lượng dữ liệu
 
@@ -29,7 +29,7 @@ Biểu đồ tròn cho biết cơ cấu khách ở lại/rời bỏ. Biểu đ�
 
 Tỷ lệ quan sát cao trong một nhóm chỉ cho thấy mối liên hệ trong dữ liệu. Không thể từ đó kết luận hợp đồng hay dịch vụ đó là nguyên nhân làm khách rời bỏ.
 
-## 3. Mục Khám phá dữ liệu
+## 3. Mục Thống kê mô tả
 
 ### Bộ lọc
 
@@ -64,17 +64,17 @@ Các hình EDA và bảng kiểm định trong phần mở rộng là kết qu�
 
 Tìm theo mã khách hàng và chọn số dòng muốn xem. Nút tải CSV xuất **toàn bộ dữ liệu sau bộ lọc và tìm kiếm**, dù bảng chỉ hiển thị một số dòng. Bảng xem dùng tên tiếng Việt; CSV tải về giữ nguyên tên cột và giá trị tiếng Anh để có thể sử dụng lại trong chương trình.
 
-## 4. Mục Đánh giá mô hình
+## 4. Mục Kỹ thuật khai phá
 
 ### Ba mô hình phân loại
 
 | Mô hình | Cách hoạt động và vai trò |
 |---|---|
 | Logistic đầy đủ | Dùng bộ đặc trưng đầy đủ sau mã hóa, loại một số dummy tham chiếu; học quan hệ giữa đặc trưng và log-odds Churn |
-| Logistic điều chỉnh | Dùng 16 đặc trưng được chọn theo báo cáo, xuất phát từ 12 cột gốc; đây là mô hình được lưu để dự đoán khách hàng mới |
+| Hồi quy logistic (sau điều chỉnh) | Dùng 16 đặc trưng được chọn theo báo cáo, xuất phát từ 12 cột gốc; đây là mô hình được lưu để dự đoán khách hàng mới |
 | Decision Tree | Cây quyết định sâu tối đa 4, dùng 7 đặc trưng được chọn; có thể quan sát các quy tắc phân nhánh |
 
-Chọn chỉ số ở biểu đồ để so sánh ba mô hình theo cùng một tiêu chí. Bảng giữ đầy đủ năm chỉ số. Mô hình có Accuracy cao nhất chưa chắc phù hợp nhất khi mục tiêu là hạn chế bỏ sót khách rời bỏ. Dashboard dùng Logistic điều chỉnh theo thiết kế dự án; không có nghĩa nó đứng đầu mọi chỉ số.
+Chọn chỉ số ở biểu đồ để so sánh ba mô hình theo cùng một tiêu chí. Bảng giữ đầy đủ năm chỉ số. Mô hình có Accuracy cao nhất chưa chắc phù hợp nhất khi mục tiêu là hạn chế bỏ sót khách rời bỏ. Dashboard dùng Hồi quy logistic (sau điều chỉnh) theo thiết kế dự án; không có nghĩa nó đứng đầu mọi chỉ số.
 
 ### Ý nghĩa các chỉ số
 
@@ -88,7 +88,7 @@ Lớp dương là **rời bỏ**, mã hóa bằng 1; lớp âm là **ở lại**
 | F1 | `2 × Precision × Recall / (Precision + Recall)`: cân bằng hai chỉ số, không tính TN |
 | ROC AUC | Khả năng phân biệt/xếp hạng hai lớp khi xét nhiều ngưỡng; 0,5 là mức ngẫu nhiên, 1 là hoàn hảo |
 
-Với kết quả hiện tại, Logistic điều chỉnh có Accuracy khoảng 73,9%, Precision 50,6%, Recall 75,9%, F1 60,7% và ROC AUC 0,827. Số liệu trên giao diện được đọc từ kết quả pipeline, có thể thay đổi khi chạy lại bằng dữ liệu hoặc phiên bản thư viện khác.
+Với kết quả hiện tại, Hồi quy logistic (sau điều chỉnh) có Accuracy khoảng 73,9%, Precision 50,6%, Recall 75,9%, F1 60,7% và ROC AUC 0,827. Số liệu trên giao diện được đọc từ kết quả pipeline, có thể thay đổi khi chạy lại bằng dữ liệu hoặc phiên bản thư viện khác.
 
 ### Ma trận nhầm lẫn
 
@@ -99,7 +99,7 @@ Hàng là nhãn thực tế; cột là nhãn dự đoán.
 | Thực tế ở lại | **TN:** nhận diện đúng khách ở lại | **FP:** cảnh báo sai một khách ở lại |
 | Thực tế rời bỏ | **FN:** bỏ sót một khách rời bỏ | **TP:** phát hiện đúng khách rời bỏ |
 
-Trong Logistic điều chỉnh hiện tại: TN=756, FP=277, FN=90, TP=284, tổng 1.407 khách kiểm tra. Có 374 người thực sự rời bỏ, mô hình phát hiện 284 người, nên Recall = 284/374 ≈ 75,9%. Có 561 người được cảnh báo, nhưng 277 người thực tế ở lại, nên Precision = 284/561 ≈ 50,6%.
+Trong Hồi quy logistic (sau điều chỉnh) hiện tại: TN=756, FP=277, FN=90, TP=284, tổng 1.407 khách kiểm tra. Có 374 người thực sự rời bỏ, mô hình phát hiện 284 người, nên Recall = 284/374 ≈ 75,9%. Có 561 người được cảnh báo, nhưng 277 người thực tế ở lại, nên Precision = 284/561 ≈ 50,6%.
 
 Các số đếm trên giao diện được lấy từ support trong báo cáo và các chỉ số JSON đủ độ chính xác của lần huấn luyện, không điền cố định vào giao diện.
 
@@ -115,7 +115,7 @@ Cross-validation 5 folds chia tập train thành 5 phần, lần lượt giữ m
 
 Hệ số Logistic dương đẩy điểm về phía Churn khi giữ các đặc trưng khác không đổi; hệ số âm đẩy theo chiều ngược lại. Hệ số được học trên đặc trưng chuẩn hóa nên không thể diễn giải trực tiếp thành số phần trăm rủi ro tăng/giảm. Đây là giải thích toàn cục của mô hình, không phải phân rã lý do cho một khách hàng cụ thể.
 
-Các nhóm tham chiếu của Logistic điều chỉnh gồm DSL cho Internet, hợp đồng một năm, séc điện tử cho thanh toán; các biến Yes/No dùng No=0 và Yes=1, giới tính Female=0 và Male=1. Với các biến số, thay đổi một đơn vị sau chuẩn hóa khác với thay đổi một đơn vị gốc.
+Các nhóm tham chiếu của Hồi quy logistic (sau điều chỉnh) gồm DSL cho Internet, hợp đồng một năm, séc điện tử cho thanh toán; các biến Yes/No dùng No=0 và Yes=1, giới tính Female=0 và Male=1. Với các biến số, thay đổi một đơn vị sau chuẩn hóa khác với thay đổi một đơn vị gốc.
 
 Trong hình cây: điều kiện ở mỗi nút quyết định nhánh; `samples` là số mẫu huấn luyện tại nút; `gini` phản ánh độ trộn hai lớp; `value` mô tả phân bố lớp theo cách biểu diễn của phiên bản sklearn; `class` là lớp dự đoán. Không mặc định `value` luôn là số đếm tuyệt đối ở mọi phiên bản.
 
@@ -132,7 +132,7 @@ OLS trong dự án giải thích **phí hàng tháng `MonthlyCharges`**, khác m
 - **p-value statsmodels:** được fit trên train gốc không SMOTE để phục vụ phân tích suy diễn. Mô hình này khác classifier sklearn dùng dự đoán nên hệ số có thể khác.
 - **McFadden pseudo R²:** so sánh log-likelihood mô hình Logistic với mô hình chỉ có hằng số. Không hiểu giá trị 0,278 là giải thích 27,8% phương sai Churn như R² OLS.
 
-## 5. Mục Dự đoán Churn
+## 5. Mục Dự đoán
 
 ### Dự đoán một khách hàng
 
@@ -146,7 +146,7 @@ Kết quả gồm ba thành phần:
 
 | Thành phần | Ý nghĩa |
 |---|---|
-| Điểm rủi ro | Điểm từ 0 đến 1 do Logistic điều chỉnh tạo ra; hiển thị dạng % để dễ đọc |
+| Điểm rủi ro | Điểm từ 0 đến 1 do Hồi quy logistic (sau điều chỉnh) tạo ra; hiển thị dạng % để dễ đọc |
 | Nhãn dự đoán | `Yes`/Rời bỏ khi điểm ≥0,5; `No`/Ở lại khi điểm <0,5 |
 | Mức rủi ro | Thấp: điểm ≤0,3; Trung bình: 0,3 < điểm ≤0,6; Cao: điểm >0,6 |
 
@@ -196,7 +196,7 @@ Giữ nguyên tên cột, viết hoa/thường như mẫu và không để trố
 | `TotalCharges` | Tổng phí tích lũy; ô trống ở dữ liệu gốc được xử lý trong cleaning |
 | `Churn` | Nhãn thực tế Yes/No, bắt buộc khi huấn luyện và không bắt buộc khi dự đoán |
 
-12 cột dự đoán là đầu vào của Logistic điều chỉnh. Mô hình này không trực tiếp dùng `MonthlyCharges`, nên biểu mẫu không yêu cầu bạn nhập phí. Điều đó không có nghĩa phí không liên quan tới Churn trong dữ liệu hay trong mô hình đầy đủ/cây.
+12 cột dự đoán là đầu vào của Hồi quy logistic (sau điều chỉnh). Mô hình này không trực tiếp dùng `MonthlyCharges`, nên biểu mẫu không yêu cầu bạn nhập phí. Điều đó không có nghĩa phí không liên quan tới Churn trong dữ liệu hay trong mô hình đầy đủ/cây.
 
 ## 6. Chạy lại và kiểm tra kết quả
 

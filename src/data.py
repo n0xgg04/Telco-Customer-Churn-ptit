@@ -112,8 +112,11 @@ def encode_features(df: pd.DataFrame, required_raw: list[str] | None = None) -> 
     return X.astype(float)
 
 
-def prepare_prediction_features(df: pd.DataFrame, trained_columns: list[str]) -> pd.DataFrame:
-    """Chỉ dùng cột đầu vào quan trọng của mô hình đã huấn luyện."""
-    X = encode_features(df, required_raw=PREDICT_REQUIRED)
+def prepare_prediction_features(df: pd.DataFrame, trained_columns: list[str],
+                                required_raw: list[str] | None = None) -> pd.DataFrame:
+    """Chỉ dùng cột đầu vào mà mô hình đã huấn luyện cần đến."""
+    required = required_raw or PREDICT_REQUIRED
+    X = encode_features(df[[c for c in df.columns if c in required or c == "customerID"]],
+                        required_raw=required)
     # Các giá trị dummy không xuất hiện trong batch mới phải là 0, không phải lỗi.
     return X.reindex(columns=trained_columns, fill_value=0.0)

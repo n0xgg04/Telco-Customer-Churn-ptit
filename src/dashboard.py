@@ -18,7 +18,7 @@ FIELD_LABELS = {
     "StreamingMovies": "Phim trực tuyến", "Contract": "Loại hợp đồng",
     "PaperlessBilling": "Hóa đơn điện tử", "PaymentMethod": "Thanh toán",
     "MonthlyCharges": "Phí hàng tháng", "TotalCharges": "Tổng phí tích lũy",
-    "Churn": "Trạng thái thực tế",
+    "Churn": "Churn",
 }
 
 VALUE_LABELS = {
@@ -35,11 +35,11 @@ VALUE_LABELS = {
 RISK_LABELS = {"Low": "Thấp", "Medium": "Trung bình", "High": "Cao"}
 
 METRIC_LABELS = {
-    "accuracy": "Accuracy · Độ chính xác",
-    "precision_churn_1": "Precision · Độ tin cậy cảnh báo",
-    "recall_churn_1": "Recall · Khả năng phát hiện",
-    "f1_churn_1": "F1 · Cân bằng Precision / Recall",
-    "roc_auc": "ROC AUC · Khả năng phân biệt",
+    "accuracy": "Accuracy",
+    "precision_churn_1": "Precision (lớp 1)",
+    "recall_churn_1": "Recall (lớp 1)",
+    "f1_churn_1": "F1-score (lớp 1)",
+    "roc_auc": "ROC AUC",
 }
 
 METRIC_HELP = {
@@ -99,17 +99,22 @@ def confusion_from_report(scores: dict, report: str) -> dict[str, int]:
     return result
 
 
-def validate_prediction_data(df: pd.DataFrame) -> None:
-    """Bắt các lỗi CSV thường gặp trước khi gọi mô hình; không sửa dữ liệu ngầm."""
+def validate_prediction_data(df: pd.DataFrame, required: list[str] | None = None) -> None:
+    """Bắt các lỗi CSV thường gặp trước khi gọi mô hình; không sửa dữ liệu ngầm.
+
+    required: cột gốc mà mô hình đang dùng cần đến (mặc định: Logistic theo báo cáo).
+    """
+    required = list(required or PREDICT_REQUIRED)
     if df.empty:
         raise ValueError("CSV chưa có khách hàng nào. Hãy thêm ít nhất một dòng dữ liệu.")
-    missing = [col for col in PREDICT_REQUIRED if col not in df]
+    missing = [col for col in required if col not in df]
     if missing:
         raise ValueError("Thiếu cột bắt buộc: " + ", ".join(missing)
                          + ". Hãy tải CSV mẫu và giữ nguyên dòng tiêu đề.")
-    if df[PREDICT_REQUIRED].isna().any().any():
-        cols = df[PREDICT_REQUIRED].columns[df[PREDICT_REQUIRED].isna().any()]
+    if df[required].isna().any().any():
+        cols = df[required].columns[df[required].isna().any()]
         raise ValueError("Có ô trống trong các cột: " + ", ".join(cols) + ".")
+    numeric = {"tenure", "MonthlyCharges", "TotalCharges", "SeniorCitizen"}
     allowed = {
         "gender": {"Male", "Female"},
         "InternetService": {"DSL", "Fiber optic", "No"},
@@ -117,27 +122,38 @@ def validate_prediction_data(df: pd.DataFrame) -> None:
         "PaymentMethod": {"Electronic check", "Mailed check",
                           "Bank transfer (automatic)", "Credit card (automatic)"},
     }
-    services = {"OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport"}
-    for col in PREDICT_REQUIRED:
-        if col not in allowed and col != "tenure":
+    services = {"OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport",
+                "StreamingTV", "StreamingMovies"}
+    for col in required:
+        if col not in allowed and col not in numeric:
             allowed[col] = {"Yes", "No"}
             if col in services:
                 allowed[col].add("No internet service")
+            if col == "MultipleLines":
+                allowed[col].add("No phone service")
     for col, choices in allowed.items():
+        if col not in required:
+            continue
         values = df[col].astype(str).str.strip()
         invalid = ~values.isin(choices)
         if invalid.any():
             examples = ", ".join(values[invalid].unique()[:3])
             raise ValueError(f"Cột {col} có giá trị không hợp lệ: {examples}. "
                              "Xem bảng định dạng trong phần Hướng dẫn sử dụng.")
-    tenure = pd.to_numeric(df["tenure"], errors="coerce")
-    if (tenure.isna() | ~np.isfinite(tenure) | (tenure < 0) | (tenure % 1 != 0)).any():
-        raise ValueError("tenure phải là số tháng nguyên, không âm và không được để trống.")
-    no_internet = df["InternetService"].astype(str).str.strip().eq("No")
-    for col in services:
-        if (no_internet & df[col].astype(str).str.strip().eq("Yes")).any():
-            raise ValueError(f"Hồ sơ không nhất quán: InternetService=No nhưng {col}=Yes. "
-                             "Hãy kiểm tra lại dịch vụ của khách hàng.")
+    if "tenure" in required:
+        tenure = pd.to_numeric(df["tenure"], errors="coerce")
+        if (tenure.isna() | ~np.isfinite(tenure) | (tenure < 0) | (tenure % 1 != 0)).any():
+            raise ValueError("tenure phải là số tháng nguyên, không âm và không được để trống.")
+    for col in {"MonthlyCharges", "TotalCharges"} & set(required):
+        values = pd.to_numeric(df[col], errors="coerce")
+        if (values.isna() | (values < 0)).any():
+            raise ValueError(f"{col} phải là số không âm.")
+    if "InternetService" in required:
+        no_internet = df["InternetService"].astype(str).str.strip().eq("No")
+        for col in services & set(required):
+            if (no_internet & df[col].astype(str).str.strip().eq("Yes")).any():
+                raise ValueError(f"Hồ sơ không nhất quán: InternetService=No nhưng {col}=Yes. "
+                                 "Hãy kiểm tra lại dịch vụ của khách hàng.")
 
 
 def prediction_display(df: pd.DataFrame) -> pd.DataFrame:
@@ -145,11 +161,11 @@ def prediction_display(df: pd.DataFrame) -> pd.DataFrame:
     result = df.copy()
     for col in result.columns:
         if col == "predicted_churn":
-            result[col] = result[col].map({"Yes": "Rời bỏ", "No": "Ở lại"})
+            result[col] = result[col].map({"Yes": "Rời bỏ", "No": "Không rời bỏ"})
         elif col == "risk_group":
             result[col] = result[col].map(RISK_LABELS)
         elif col == "Churn":
-            result[col] = result[col].map({"Yes": "Đã rời bỏ", "No": "Ở lại"})
+            result[col] = result[col].map({"Yes": "Rời bỏ", "No": "Không rời bỏ"})
         elif col in FIELD_LABELS and result[col].dtype.kind in "OUS":
             result[col] = result[col].map(value_label)
     return result.rename(columns={**FIELD_LABELS, "churn_risk_score": "Điểm rủi ro",

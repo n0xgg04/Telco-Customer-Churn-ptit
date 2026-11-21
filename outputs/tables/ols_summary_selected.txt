@@ -1,0 +1,34 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:         MonthlyCharges   R-squared:                       0.970
+Model:                            OLS   Adj. R-squared:                  0.970
+Method:                 Least Squares   F-statistic:                 1.821e+04
+Date:                Fri, 20 Nov 2026   Prob (F-statistic):               0.00
+Time:                        16:07:05   Log-Likelihood:                -17275.
+No. Observations:                5625   AIC:                         3.457e+04
+Df Residuals:                    5614   BIC:                         3.464e+04
+Df Model:                          10                                         
+Covariance Type:            nonrobust                                         
+===============================================================================================
+                                  coef    std err          t      P>|t|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------
+const                          38.5320      0.176    218.656      0.000      38.187      38.877
+MultipleLines                   7.7696      0.158     49.307      0.000       7.461       8.079
+OnlineSecurity                  5.6764      0.178     31.966      0.000       5.328       6.025
+OnlineBackup                    4.9444      0.166     29.716      0.000       4.618       5.271
+DeviceProtection                4.4953      0.176     25.612      0.000       4.151       4.839
+TechSupport                     5.9352      0.183     32.387      0.000       5.576       6.295
+StreamingTV                     9.5305      0.180     52.983      0.000       9.178       9.883
+StreamingMovies                 9.3267      0.180     51.725      0.000       8.973       9.680
+InternetService_No            -18.9980      0.247    -76.790      0.000     -19.483     -18.513
+InternetService_Fiber optic    30.2055      0.179    168.284      0.000      29.854      30.557
+Contract_Two year              -0.4813      0.190     -2.536      0.011      -0.853      -0.109
+==============================================================================
+Omnibus:                     1262.794   Durbin-Watson:                   2.046
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             2538.824
+Skew:                          -1.339   Prob(JB):                         0.00
+Kurtosis:                       4.912   Cond. No.                         7.31
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

@@ -1,0 +1,18 @@
+﻿feature,vif
+const,1.0
+gender,1.0021589052261897
+Dependents,1.0814696939705397
+tenure,2.494902699537203
+PhoneService,1.2721951594622252
+OnlineSecurity,1.4047210168946662
+OnlineBackup,1.3722098218004872
+DeviceProtection,1.4202719059242515
+TechSupport,1.4490125075264162
+PaperlessBilling,1.194794129289366
+InternetService_No,2.6036407895065636
+InternetService_Fiber optic,1.8744476511110943
+PaymentMethod_Bank transfer (automatic),1.4928237862651856
+PaymentMethod_Credit card (automatic),1.517080611216602
+PaymentMethod_Mailed check,1.65440594162818
+Contract_Month-to-month,2.4155201034209393
+Contract_Two year,1.8557490628718385

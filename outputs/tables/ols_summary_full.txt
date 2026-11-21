@@ -1,0 +1,45 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:         MonthlyCharges   R-squared:                       0.999
+Model:                            OLS   Adj. R-squared:                  0.999
+Method:                 Least Squares   F-statistic:                 2.329e+05
+Date:                Fri, 20 Nov 2026   Prob (F-statistic):               0.00
+Time:                        16:07:05   Log-Likelihood:                -8096.6
+No. Observations:                5625   AIC:                         1.624e+04
+Df Residuals:                    5603   BIC:                         1.638e+04
+Df Model:                          21                                         
+Covariance Type:            nonrobust                                         
+===========================================================================================================
+                                              coef    std err          t      P>|t|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------------
+const                                      24.9931      0.074    335.597      0.000      24.847      25.139
+gender                                      0.0280      0.027      1.026      0.305      -0.026       0.082
+SeniorCitizen                               0.0046      0.040      0.115      0.908      -0.074       0.083
+Partner                                    -0.0188      0.033     -0.568      0.570      -0.084       0.046
+Dependents                                  0.0272      0.035      0.777      0.437      -0.041       0.096
+tenure                                     -0.0007      0.001     -0.714      0.476      -0.003       0.001
+PhoneService                               20.0348      0.054    373.662      0.000      19.930      20.140
+MultipleLines                               5.0270      0.033    152.723      0.000       4.962       5.092
+OnlineSecurity                              5.0146      0.036    139.713      0.000       4.944       5.085
+OnlineBackup                                5.0138      0.034    149.257      0.000       4.948       5.080
+DeviceProtection                            4.9924      0.035    142.467      0.000       4.924       5.061
+TechSupport                                 5.0338      0.037    137.529      0.000       4.962       5.106
+StreamingTV                                 9.9577      0.036    279.656      0.000       9.888      10.027
+StreamingMovies                             9.9643      0.036    279.780      0.000       9.895      10.034
+PaperlessBilling                           -0.0069      0.030     -0.226      0.821      -0.067       0.053
+InternetService_Fiber optic                24.9578      0.039    640.300      0.000      24.881      25.034
+InternetService_No                        -25.0142      0.055   -458.136      0.000     -25.121     -24.907
+Contract_Month-to-month                    -0.0081      0.043     -0.189      0.850      -0.092       0.076
+Contract_Two year                          -0.0378      0.044     -0.867      0.386      -0.123       0.048
+PaymentMethod_Bank transfer (automatic)    -0.0126      0.041     -0.312      0.755      -0.092       0.067
+PaymentMethod_Credit card (automatic)      -0.0229      0.041     -0.562      0.574      -0.103       0.057
+PaymentMethod_Mailed check                 -0.0516      0.042     -1.229      0.219      -0.134       0.031
+==============================================================================
+Omnibus:                       91.648   Durbin-Watson:                   2.005
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):              179.593
+Skew:                           0.020   Prob(JB):                     1.00e-39
+Kurtosis:                       3.874   Cond. No.                         262.
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

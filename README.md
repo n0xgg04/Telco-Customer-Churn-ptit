@@ -1,8 +1,8 @@
 # Telco Customer Churn – Bài tập lớn Kho dữ liệu & Khai phá dữ liệu
 
-Dự án Python triển khai theo báo cáo **Khai phá dữ liệu về tỷ lệ rời bỏ khách hàng – Nhóm 6** được cung cấp. Đây là bản triển khai thực hành *tham chiếu phương pháp*, không cam kết tái tạo chính xác hệ số và số liệu do báo cáo nêu (vì cách chia tập và xử lý rò rỉ dữ liệu được cải tiến).
+Dự án Python triển khai theo báo cáo **Khai phá dữ liệu về tỷ lệ rời bỏ khách hàng – Nhóm 1** được cung cấp. Đây là bản triển khai thực hành *tham chiếu phương pháp*, không cam kết tái tạo chính xác hệ số và số liệu do báo cáo nêu (vì cách chia tập và xử lý rò rỉ dữ liệu được cải tiến).
 
-Hướng dẫn đầy đủ về từng trang, chỉ số, biểu đồ và định dạng CSV nằm trong [HUONG_DAN_GIAO_DIEN.md](HUONG_DAN_GIAO_DIEN.md). Dashboard mới có menu trái gồm **Tổng quan**, **Khám phá dữ liệu**, **Đánh giá mô hình**, **Dự đoán Churn** và **Hướng dẫn sử dụng**. Có thể đọc và tải tài liệu ngay trong ứng dụng.
+Hướng dẫn đầy đủ về từng trang, chỉ số, biểu đồ và định dạng CSV nằm trong [HUONG_DAN_GIAO_DIEN.md](HUONG_DAN_GIAO_DIEN.md). Dashboard mới có menu trái gồm **Mô tả dữ liệu**, **Thống kê mô tả**, **Kỹ thuật khai phá**, năm bước **Demo huấn luyện lại** và **Hướng dẫn sử dụng**. Có thể đọc và tải tài liệu ngay trong ứng dụng.
 
 ## 1. Chạy trên Windows 10/11 (VS Code, PowerShell)
 
@@ -80,7 +80,7 @@ telco_churn_project/
 
 - **OLS điều chỉnh:** `MultipleLines`, `OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies`, `InternetService_No`, `InternetService_Fiber optic`, `Contract_Two year` (Bảng 5).
 - **Cây quyết định:** `Contract_Month-to-month`, `tenure`, `Contract_Two year`, `InternetService_Fiber optic`, `MonthlyCharges`, `InternetService_No`, `PaymentMethod_Electronic check` (mục 6.2.2).
-- **Logistic điều chỉnh:** 16 biến đúng Bảng 8, khai báo trong `src/schema.py`.
+- **Hồi quy logistic (sau điều chỉnh):** 16 biến đúng Bảng 8, khai báo trong `src/schema.py`.
 
 ## 5. Những khác biệt kỹ thuật có chủ ý với cách viết trong báo cáo
 

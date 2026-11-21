@@ -1,0 +1,27 @@
+﻿,Churn
+tenure,-0.36965930669157676
+Contract_Two year,-0.3015523396239548
+TotalCharges,-0.2321903417980992
+InternetService_No,-0.2275776204465627
+Contract_One year,-0.1782250232899511
+OnlineSecurity,-0.17126992353349907
+TechSupport,-0.16471590834410746
+Dependents,-0.16312843938822014
+Partner,-0.1499819256200588
+PaymentMethod_Credit card (automatic),-0.1346868372340776
+InternetService_DSL,-0.12414142842590138
+PaymentMethod_Bank transfer (automatic),-0.11813599782803856
+PaymentMethod_Mailed check,-0.09077284582583409
+OnlineBackup,-0.08230696876508191
+DeviceProtection,-0.06619251684228536
+gender,-0.008544643224946335
+PhoneService,0.01169139886542159
+MultipleLines,0.04003273987252137
+StreamingMovies,0.06085993668145864
+StreamingTV,0.06325398027519345
+SeniorCitizen,0.1505410534156806
+MonthlyCharges,0.18416662532527198
+PaperlessBilling,0.1914543210800457
+PaymentMethod_Electronic check,0.3014546379085642
+InternetService_Fiber optic,0.3074625906981304
+Contract_Month-to-month,0.404564550077825

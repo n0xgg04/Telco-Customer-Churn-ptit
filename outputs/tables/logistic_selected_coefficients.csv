@@ -1,0 +1,17 @@
+﻿feature,coefficient_scaled
+tenure,-0.5565797191567016
+InternetService_No,-0.39034184230439234
+OnlineSecurity,-0.2538405416915037
+PaymentMethod_Bank transfer (automatic),-0.2489573155922774
+Contract_Two year,-0.22617912239358673
+PaymentMethod_Credit card (automatic),-0.22426967172864215
+PaymentMethod_Mailed check,-0.2051123109625341
+TechSupport,-0.1913294105510334
+Dependents,-0.1911255696720965
+PhoneService,-0.10770565088514929
+OnlineBackup,-0.10494455187606573
+gender,-1.5162539534032627e-05
+DeviceProtection,0.060891275766268765
+PaperlessBilling,0.14661578090688543
+Contract_Month-to-month,0.3959768617717122
+InternetService_Fiber optic,0.5680560426813089

@@ -1,0 +1,86 @@
+/* Trình bày kiểu báo cáo: nền trắng, đường kẻ mảnh, hình và bảng có đánh số. */
+:root {
+  --text: #1a1a1a; --muted: #555b65; --faint: #8a9099; --line: #e3e5e9; --line2: #d9dce1;
+  --paper: #ffffff; --soft: #f7f8fa; --accent: #1f4e79;
+}
+
+.stApp, [data-testid="stHeader"] { background: var(--paper); }
+[data-testid="stAppDeployButton"], [data-testid="stDecoration"] { display: none; }
+.block-container { max-width: 1180px; padding: 3rem 2.2rem 4rem; }
+h1, h2, h3 { color: var(--text); letter-spacing: -.01em; }
+h3 { font-size: 1.05rem !important; font-weight: 600 !important; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { color: var(--muted) !important; }
+[data-testid="stMarkdownContainer"] p { line-height: 1.6; }
+
+/* Page head */
+.top { border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 22px; }
+.top .kicker { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.top h1 { margin: 4px 0 0; padding: 0 !important; font-size: 1.75rem !important; font-weight: 650 !important; }
+.top p { margin: 6px 0 0; color: var(--muted); max-width: 820px; }
+.section-note, .stMarkdown p.section-note { color: var(--muted); font-size: 13px !important; margin: -.3rem 0 .6rem; }
+
+/* Figure / table captions, numbered like a report */
+/* Chú thích kiểu báo cáo: nằm dưới, in nghiêng, căn phải ("Biểu đồ n.", "Bảng n.") */
+.fig-cap, .tab-cap, .stMarkdown p.fig-cap, .stMarkdown p.tab-cap { text-align: right; font-style: italic; color: var(--muted); font-size: 13px !important; margin: .2rem 0 1.1rem; }
+.fig-cap b, .tab-cap b { color: var(--muted); font-weight: 400; }
+
+/* Sidebar */
+[data-testid="stSidebar"] { border-right: 1px solid var(--line); }
+[data-testid="stSidebarUserContent"] { padding: 1.4rem 1rem; }
+.brand { font-weight: 650; font-size: 15px; padding: 0 8px 2px; color: var(--text); }
+.brand small { display: block; color: var(--faint); font-weight: 400; font-size: 12px; margin-top: 2px; }
+.side-text, .stMarkdown p.side-text { color: var(--muted); font-size: 12.5px !important; line-height: 1.55; padding: 0 8px; }
+[data-testid="stSidebar"] .stRadio [role="radiogroup"] { gap: 1px; }
+[data-testid="stSidebar"] .stRadio label { width: 100%; padding: 6px 10px; margin: 0; border-radius: 4px; border-left: 2px solid transparent; }
+[data-testid="stSidebar"] [data-testid="stRadioOption"] :has(+ [data-testid="stMarkdownContainer"]) { display: none !important; }
+[data-testid="stSidebar"] .stRadio label p { font-size: 14px; color: var(--muted); }
+[data-testid="stSidebar"] .stRadio label:hover { background: #eceef1; }
+[data-testid="stSidebar"] .stRadio label:has(input:checked) { background: #e8eef5; border-left-color: var(--accent); }
+[data-testid="stSidebar"] .stRadio label:has(input:checked) p { color: var(--accent); font-weight: 600; }
+/* Group headings inside the single navigation radio */
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(1)::before,
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(4)::before,
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(9)::before {
+  display: block; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); padding: 14px 10px 4px;
+}
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(1)::before { content: "Báo cáo"; padding-top: 6px; }
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(4)::before { content: "Demo huấn luyện lại"; }
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > :nth-child(9)::before { content: "Tài liệu"; }
+[data-testid="stSidebar"] hr { margin: 1.1rem 0; }
+[data-testid="stSidebar"] .stDownloadButton button { width: 100%; font-size: 13px; }
+.side-foot { margin-top: 1.2rem; padding: 12px 8px 0; border-top: 1px solid var(--line); font-size: 12px; color: var(--faint); line-height: 1.6; }
+
+/* Containers and metrics: plain boxes */
+[data-testid="stMetric"] { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px 16px; }
+[data-testid="stMetricLabel"] { color: var(--muted); }
+[data-testid="stMetricValue"] { font-size: 1.7rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+[data-testid="stForm"] { border-radius: 4px; }
+.status { background: var(--soft); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 4px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
+.status b { font-weight: 600; }
+
+/* Plain report table */
+table.report { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 6px; }
+table.report th { text-align: left; font-weight: 600; border-bottom: 1.5px solid var(--text); padding: 6px 10px; }
+table.report td { border-bottom: 1px solid var(--line); padding: 6px 10px; font-variant-numeric: tabular-nums; }
+table.report tr:last-child td { border-bottom: 1.5px solid var(--text); }
+table.report .r { text-align: right; }
+
+/* Step header in demo pages */
+.step { display: flex; gap: 12px; align-items: baseline; margin: 1.6rem 0 .5rem; }
+.step-n { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.step h3 { margin: 0 !important; padding: 0 !important; }
+.step-note, .stMarkdown p.step-note { color: var(--muted); font-size: 14px !important; margin: 0 0 .6rem; }
+.result { border: 1px solid var(--line); border-left: 3px solid var(--k, var(--accent)); border-radius: 4px; padding: 12px 16px; margin: .6rem 0 1rem; }
+.result .big { font-size: 1.9rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.result .note { color: var(--muted); font-size: 13px; }
+
+.stButton button, .stDownloadButton button, .stFormSubmitButton button { border-radius: 4px; }
+[data-testid="stDataFrame"] { border: 1px solid var(--line); border-radius: 4px; }
+[data-testid="stExpander"] details { border-radius: 4px; }
+
+@media (min-width: 1000px) {
+  [data-testid="stSidebar"] { width: 260px !important; min-width: 260px !important; max-width: 260px !important; }
+}
+@media (max-width: 700px) {
+  .block-container { padding: 3rem 1rem 2rem; }
+}

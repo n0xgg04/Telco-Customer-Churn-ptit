@@ -73,21 +73,21 @@ def click_label(app, label):
 
 def test_all_pages_and_model_details(dashboard):
     app = dashboard
-    for page in ["Khám phá dữ liệu", "Đánh giá mô hình", "Dự đoán Churn", "Hướng dẫn sử dụng"]:
+    for page in ["Thống kê mô tả", "Kỹ thuật khai phá", "1. Dữ liệu", "2. Tiền xử lý", "3. Huấn luyện", "4. So sánh", "5. Dự đoán", "Hướng dẫn sử dụng"]:
         app.radio(key="navigation").set_value(page).run()
         assert_healthy(app)
     for topic in app.selectbox(key="guide_topic").options:
         app.selectbox(key="guide_topic").select(topic).run()
         assert_healthy(app)
-    app.radio(key="navigation").set_value("Đánh giá mô hình").run()
-    for name in ["Logistic điều chỉnh", "Logistic đầy đủ", "Cây quyết định"]:
-        next(box for box in app.selectbox if box.label == "Xem chi tiết mô hình").select(name).run()
+    app.radio(key="navigation").set_value("Kỹ thuật khai phá").run()
+    for name in ["Hồi quy logistic (sau điều chỉnh)", "Hồi quy logistic (ban đầu)", "Cây quyết định"]:
+        next(box for box in app.selectbox if box.label == "Mô hình").select(name).run()
         assert_healthy(app)
 
 
 def test_empty_filters_reset_and_search(dashboard):
     app = dashboard
-    app.radio(key="navigation").set_value("Khám phá dữ liệu").run()
+    app.radio(key="navigation").set_value("Thống kê mô tả").run()
     app.multiselect(key="filter_contract").set_value([]).run()
     assert_healthy(app)
     assert any("Không có khách hàng" in warning.value for warning in app.warning)
@@ -101,20 +101,44 @@ def test_empty_filters_reset_and_search(dashboard):
 
 def test_single_and_batch_predictions(dashboard):
     app = dashboard
-    app.radio(key="navigation").set_value("Dự đoán Churn").run()
+    app.radio(key="navigation").set_value("5. Dự đoán").run()
     click_label(app, "Dự đoán nguy cơ")
     assert_healthy(app)
-    assert next(metric for metric in app.metric if metric.label == "Nhãn dự đoán").value == "Yes · Rời bỏ"
+    assert next(metric for metric in app.metric if metric.label == "Nhãn dự đoán").value == "Rời bỏ"
     app.selectbox(key="scenario").select("DEMO002 · hợp đồng dài hạn").run()
     click_label(app, "Dự đoán nguy cơ")
     assert_healthy(app)
-    assert next(metric for metric in app.metric if metric.label == "Nhãn dự đoán").value == "No · Ở lại"
+    assert next(metric for metric in app.metric if metric.label == "Nhãn dự đoán").value == "Không rời bỏ"
     app.radio(key="prediction_mode").set_value("Hàng loạt qua CSV").run()
     click_label(app, "Chạy thử 3 khách hàng mẫu")
     assert_healthy(app)
     assert len(app.dataframe[0].value) == 3
-    assert next(metric for metric in app.metric if metric.label == "Tổng khách đã chấm điểm").value == "3"
+    assert next(metric for metric in app.metric if metric.label == "Đã chấm điểm").value == "3"
     app.text_input(key="prediction_search").set_value("DEMO002").run()
     assert_healthy(app)
     assert len(app.dataframe[0].value) == 1
-    assert next(metric for metric in app.metric if metric.label == "Tổng khách đã chấm điểm").value == "3"
+    assert next(metric for metric in app.metric if metric.label == "Đã chấm điểm").value == "3"
+
+
+def test_retrain_flow(dashboard, tmp_path, monkeypatch):
+    monkeypatch.setenv("TELCO_RUNS_DIR", str(tmp_path))
+    app = dashboard
+    app.radio(key="navigation").set_value("2. Tiền xử lý").run()
+    for method in ["smote", "undersample", "none"]:
+        app.selectbox(key="pp_bal").set_value(method).run()
+        assert_healthy(app)
+    app.radio(key="navigation").set_value("3. Huấn luyện").run()
+    app.radio(key="rt_seed_mode").set_value("fixed").run()
+    click_label(app, "Huấn luyện")
+    assert_healthy(app)
+    assert len(list(tmp_path.glob("*/run.json"))) == 1
+    assert any(button.label == "Dùng mô hình này để dự đoán" for button in app.button)
+    app.selectbox(key="rt_logit_solver").select("saga").run()
+    app.radio(key="rt_logit_pen_True").set_value("l1").run()
+    click_label(app, "Huấn luyện")
+    assert_healthy(app)
+    assert len(list(tmp_path.glob("*/run.json"))) == 2
+    app.radio(key="navigation").set_value("4. So sánh").run()
+    assert_healthy(app)
+    app.selectbox(key="cmp_metric").set_value("f1_churn_1").run()
+    assert_healthy(app)

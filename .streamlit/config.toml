@@ -1,7 +1,17 @@
 [theme]
 base = "light"
-primaryColor = "#087F8C"
-backgroundColor = "#F5F7FB"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#172B4D"
-font = "sans serif"
+primaryColor = "#1f4e79"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f5f7"
+textColor = "#1a1a1a"
+borderColor = "#d9dce1"
+showWidgetBorder = true
+baseRadius = "4px"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+codeFont = "JetBrains Mono:https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+chartCategoricalColors = ["#4c78a8", "#f58518", "#54a24b", "#e45756", "#72b7b2", "#b279a2", "#eeca3b", "#9d755d"]
+
+[theme.sidebar]
+backgroundColor = "#f7f8fa"
+secondaryBackgroundColor = "#eceef1"
+borderColor = "#e3e5e9"

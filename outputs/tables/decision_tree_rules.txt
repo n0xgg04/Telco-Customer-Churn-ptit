@@ -1,0 +1,46 @@
+|--- Contract_Month-to-month <= 0.50
+|   |--- MonthlyCharges <= 93.67
+|   |   |--- Contract_Two year <= 0.50
+|   |   |   |--- MonthlyCharges <= 72.40
+|   |   |   |   |--- class: 0
+|   |   |   |--- MonthlyCharges >  72.40
+|   |   |   |   |--- class: 0
+|   |   |--- Contract_Two year >  0.50
+|   |   |   |--- PaymentMethod_Electronic check <= 0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- PaymentMethod_Electronic check >  0.50
+|   |   |   |   |--- class: 0
+|   |--- MonthlyCharges >  93.67
+|   |   |--- Contract_Two year <= 0.50
+|   |   |   |--- PaymentMethod_Electronic check <= 0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- PaymentMethod_Electronic check >  0.50
+|   |   |   |   |--- class: 0
+|   |   |--- Contract_Two year >  0.50
+|   |   |   |--- MonthlyCharges <= 94.08
+|   |   |   |   |--- class: 1
+|   |   |   |--- MonthlyCharges >  94.08
+|   |   |   |   |--- class: 0
+|--- Contract_Month-to-month >  0.50
+|   |--- InternetService_Fiber optic <= 0.50
+|   |   |--- tenure <= 5.50
+|   |   |   |--- InternetService_No <= 0.50
+|   |   |   |   |--- class: 1
+|   |   |   |--- InternetService_No >  0.50
+|   |   |   |   |--- class: 0
+|   |   |--- tenure >  5.50
+|   |   |   |--- PaymentMethod_Electronic check <= 0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- PaymentMethod_Electronic check >  0.50
+|   |   |   |   |--- class: 0
+|   |--- InternetService_Fiber optic >  0.50
+|   |   |--- tenure <= 14.50
+|   |   |   |--- tenure <= 1.50
+|   |   |   |   |--- class: 1
+|   |   |   |--- tenure >  1.50
+|   |   |   |   |--- class: 1
+|   |   |--- tenure >  14.50
+|   |   |   |--- PaymentMethod_Electronic check <= 0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- PaymentMethod_Electronic check >  0.50
+|   |   |   |   |--- class: 0

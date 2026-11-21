@@ -472,9 +472,23 @@ def counts_row(name: str, c: dict) -> list:
     return [name, f"{total:,}", f"{c['stay']:,}", f"{c['churn']:,}", f"{c['churn'] / total:.1%}"]
 
 
+# Tăng số này khi preprocess_preview trả thêm khóa mới, để bỏ cache của bản cũ.
+PREVIEW_VERSION = 2
+PREVIEW_KEYS = ("records", "removed", "split", "balance", "scale_stats")
+
+
 @st.cache_data(show_spinner=False, max_entries=8)
-def cached_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: float, seed: int, method: str) -> dict:
+def _cached_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: float, seed: int, method: str,
+                    version: int) -> dict:
     return preprocess_preview(base, new, test_size, seed, method)
+
+
+def cached_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: float, seed: int, method: str) -> dict:
+    p = _cached_preview(base, new, test_size, seed, method, PREVIEW_VERSION)
+    if not all(k in p for k in PREVIEW_KEYS):  # cache cũ còn sót sau khi cập nhật code
+        _cached_preview.clear()
+        p = _cached_preview(base, new, test_size, seed, method, PREVIEW_VERSION)
+    return p
 
 
 RECORD_VIEWS = {"all": "Tất cả record", "removed": "Bị loại bỏ", "kept": "Còn lại (hợp lệ)"}

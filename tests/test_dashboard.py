@@ -127,6 +127,10 @@ def test_retrain_flow(dashboard, tmp_path, monkeypatch):
     for method in ["smote", "undersample", "none"]:
         app.selectbox(key="pp_bal").set_value(method).run()
         assert_healthy(app)
+    for view in ["removed", "kept", "all"]:
+        app.button(key=f"clean_card_{view}").click().run()
+        assert_healthy(app)
+        assert app.session_state["clean_view"] == view
     app.radio(key="navigation").set_value("3. Huấn luyện").run()
     app.radio(key="rt_seed_mode").set_value("fixed").run()
     click_label(app, "Huấn luyện")
@@ -142,3 +146,5 @@ def test_retrain_flow(dashboard, tmp_path, monkeypatch):
     assert_healthy(app)
     app.selectbox(key="cmp_metric").set_value("f1_churn_1").run()
     assert_healthy(app)
+    app.button(key="to_step5").click().run()
+    assert app.radio(key="navigation").value == "5. Dự đoán"

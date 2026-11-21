@@ -268,6 +268,22 @@ BALANCING_HOW = {
 NUMERIC_SHOWN = ["tenure", "MonthlyCharges", "TotalCharges"]
 
 
+def removal_reasons(combined: pd.DataFrame, clean: pd.DataFrame) -> pd.Series:
+    """Lý do từng dòng bị loại khi làm sạch; dòng hợp lệ để chuỗi rỗng."""
+    reasons = pd.Series("", index=combined.index, dtype=object)
+    ids = combined["customerID"].astype(str)
+    dupes = ids.duplicated(keep="first")
+    gone = ~ids.isin(set(clean["customerID"].astype(str))) | dupes
+    blank = combined[RAW_COLUMNS].apply(lambda col: col.isna() | col.astype(str).str.strip().eq(""))
+    for idx in combined.index[gone]:
+        if dupes[idx]:
+            reasons[idx] = "Trùng customerID"
+        else:
+            cols = [c for c in RAW_COLUMNS if blank.at[idx, c]]
+            reasons[idx] = "Thiếu " + ", ".join(cols) if cols else "Giá trị không hợp lệ"
+    return reasons
+
+
 def preprocess_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: float,
                        seed: int, method: str) -> dict:
     """Chạy từng bước tiền xử lý và giữ lại dữ liệu trung gian để hiển thị."""
@@ -276,6 +292,8 @@ def preprocess_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: 
     clean, quality = clean_dataset(combined)
     kept = set(clean["customerID"].astype(str))
     removed = combined[~combined["customerID"].astype(str).isin(kept)]
+    records = combined[RAW_COLUMNS].copy()
+    records.insert(0, "Lý do loại bỏ", removal_reasons(combined, clean))
     encoded = encode_features(clean)
     y = target_from_dataframe(clean)
     # Ví dụ mã hóa: 2 khách đầu + 1 khách không có Internet (nếu có).
@@ -299,7 +317,7 @@ def preprocess_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: 
     })
     return {
         "merge": merge, "quality": quality, "blank_total": int(blank_total.sum()),
-        "removed": removed, "clean_rows": len(clean), "churn_rate": float(y.mean()),
+        "removed": removed, "records": records, "clean_rows": len(clean), "churn_rate": float(y.mean()),
         "raw_sample": clean.loc[sample_idx], "encoded_sample": encoded.loc[sample_idx],
         "encoded_shape": encoded.shape,
         "split": {"train": _counts(y_train), "test": _counts(y_test)},

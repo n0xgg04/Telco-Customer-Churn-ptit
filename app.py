@@ -9,6 +9,7 @@ import altair as alt
 import joblib
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from predict import predict_dataframe
 from src.retrain import (
@@ -476,6 +477,125 @@ def cached_preview(base: pd.DataFrame, new: pd.DataFrame | None, test_size: floa
     return preprocess_preview(base, new, test_size, seed, method)
 
 
+RECORD_VIEWS = {"all": "Tất cả record", "removed": "Bị loại bỏ", "kept": "Còn lại (hợp lệ)"}
+RECORD_CAPTIONS = {"all": "Toàn bộ record sau khi gộp; hàng đỏ là hàng bị loại.",
+                   "removed": "Các record bị loại khi làm sạch.", "kept": "Các record hợp lệ dùng cho bước sau."}
+
+
+def set_record_view(view: str) -> None:
+    st.session_state["clean_view"] = view
+
+
+def clean_records(records: pd.DataFrame) -> None:
+    """Ba thẻ bấm được (tất cả / bị loại / còn lại) và bảng record tương ứng."""
+    bad = records["Lý do loại bỏ"].ne("")
+    counts = {"all": len(records), "removed": int(bad.sum()), "kept": int((~bad).sum())}
+    view = st.session_state.get("clean_view", "all")
+    for col, key in zip(st.columns(3), RECORD_VIEWS):
+        col.button(f"{RECORD_VIEWS[key]} **{counts[key]:,}**", key=f"clean_card_{key}", width="stretch",
+                   type="primary" if key == view else "secondary", on_click=set_record_view, args=(key,))
+    shown = {"all": records, "removed": records[bad], "kept": records[~bad]}[view]
+    record_table(shown, navigate=view == "all")
+    html(f'<p class="tab-cap">{numbered("Bảng", RECORD_CAPTIONS[view])}</p>')
+
+
+def record_table(frame: pd.DataFrame, navigate: bool) -> None:
+    """Bảng HTML cuộn được: tô đỏ hàng bị loại, có nút cuộn tới từng hàng bị loại."""
+    cols = list(frame.columns)
+    rows = [[int(i) + 1, *("" if pd.isna(v) else str(v) for v in r)] for i, r in zip(frame.index, frame.itertuples(index=False))]
+    payload = json.dumps({"cols": cols, "rows": rows, "nav": navigate}, ensure_ascii=False).replace("</", "<\\/")
+    components.html(RECORD_TABLE_HTML.replace("__DATA__", payload), height=500 if navigate else 440)
+
+
+RECORD_TABLE_HTML = """
+<style>
+  body { margin: 0; font: 13px Inter, -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1a1a; background: #fff; }
+  .nav { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 0 8px; }
+  .nav b { font-weight: 600; margin-right: 4px; }
+  .nav button { font: inherit; font-size: 12px; border: 1px solid #e3a6a6; background: #fdf1f1; color: #9b1c1c;
+                border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+  .nav button:hover { background: #fbe0e0; }
+  .nav .step { border-color: #d9dce1; background: #fff; color: #1a1a1a; }
+  .nav .pos { color: #555b65; margin-left: 4px; }
+  .wrap { position: relative; overflow: auto; border: 1px solid #d9dce1; border-radius: 4px; }
+  table { border-collapse: collapse; white-space: nowrap; }
+  th, td { padding: 4px 10px; border-bottom: 1px solid #eceef1; text-align: left; }
+  th { position: sticky; top: 0; background: #f4f5f7; font-weight: 600; z-index: 1; border-bottom: 1px solid #c9cdd3; }
+  td.n { color: #8a9099; text-align: right; }
+  .pin { position: sticky; background: #fff; z-index: 2; }
+  th.pin { z-index: 3; background: #f4f5f7; }
+  .pin.last { box-shadow: 1px 0 0 #c9cdd3; }
+  tr.bad td, tr.bad td.pin { background: #fdecec; color: #8c1d1d; }
+  tr.bad td.reason { font-weight: 600; }
+  tr.bad td.empty { outline: 2px solid #d64545; outline-offset: -2px; }
+  td.empty::after { content: "(trống)"; font-style: italic; color: #c0392b; }
+  tr.flash td { animation: flash 1.4s ease-out; }
+  @keyframes flash { 0%, 40% { background: #f8c4c4; } 100% { background: #fdecec; } }
+</style>
+<div class="nav" id="nav"></div>
+<div class="wrap" id="wrap"><table><thead id="head"></thead><tbody id="body"></tbody></table></div>
+<script>
+const data = __DATA__;
+const wrap = document.getElementById("wrap");
+wrap.style.height = (data.nav ? 440 : 420) + "px";
+document.getElementById("head").innerHTML =
+  "<tr><th>#</th>" + data.cols.map(c => "<th></th>").join("") + "</tr>";
+document.querySelectorAll("#head th").forEach((th, i) => { if (i) th.textContent = data.cols[i - 1]; });
+const esc = v => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const bad = [];
+const html = data.rows.map((r, i) => {
+  const isBad = r[1] !== "";
+  if (isBad) bad.push(i);
+  const cells = r.slice(1).map((v, j) => {
+    const cls = j === 0 ? "reason" : (isBad && v.trim() === "" ? "empty" : "");
+    return `<td class="${cls}">${esc(v)}</td>`;
+  }).join("");
+  return `<tr id="r${i}" class="${isBad ? "bad" : ""}"><td class="n">${r[0]}</td>${cells}</tr>`;
+}).join("");
+document.getElementById("body").innerHTML = html;
+if (!data.rows.length) document.getElementById("body").innerHTML = "<tr><td>Không có record.</td></tr>";
+// Ghim 3 cột đầu (#, lý do, customerID) khi cuộn ngang.
+const firstRow = document.querySelector("#head tr");
+let left = 0;
+[0, 1, 2].forEach(c => {
+  const width = firstRow.children[c] ? firstRow.children[c].offsetWidth : 0;
+  document.querySelectorAll(`#head tr > :nth-child(${c + 1}), #body tr > :nth-child(${c + 1})`).forEach(el => {
+    el.classList.add("pin"); if (c === 2) el.classList.add("last"); el.style.left = left + "px";
+  });
+  left += width;
+});
+let at = -1;
+function go(k) {
+  if (!bad.length) return;
+  at = (k + bad.length) % bad.length;
+  const row = document.getElementById("r" + bad[at]);
+  wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
+  const empty = row.querySelector("td.empty");
+  wrap.scrollLeft = empty ? empty.offsetLeft - left - 40 : 0;
+  row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+  document.getElementById("pos").textContent = `${at + 1}/${bad.length}`;
+}
+if (data.nav) {
+  const nav = document.getElementById("nav");
+  if (!bad.length) { nav.textContent = "Không có hàng nào bị loại."; }
+  else {
+    nav.innerHTML = '<b>Tới hàng bị loại:</b><button class="step" id="prev">↑ Trước</button>' +
+      '<button class="step" id="next">Tiếp ↓</button><span class="pos" id="pos"></span>';
+    document.getElementById("prev").onclick = () => go(at - 1);
+    document.getElementById("next").onclick = () => go(at + 1);
+    bad.slice(0, 40).forEach((i, k) => {
+      const b = document.createElement("button");
+      b.textContent = `#${data.rows[i][0]} · ${data.rows[i][2]}`;
+      b.title = data.rows[i][1];
+      b.onclick = () => go(k);
+      nav.appendChild(b);
+    });
+  }
+}
+</script>
+"""
+
+
 # ---------- Bước 1 ----------
 def page_data() -> None:
     page_header("Bước 1 · Dữ liệu", "Demo · 1/5")
@@ -553,13 +673,7 @@ def page_preprocess() -> None:
                  ["", "Số dòng"], "Kết quả gộp dữ liệu.", {1})
 
     step("2.2", "Làm sạch dữ liệu")
-    a, b, c = st.columns(3)
-    a.metric("Số quan sát ban đầu", f"{quality['so_dong_ban_dau']:,}")
-    b.metric("Giá trị thiếu (loại bỏ)", f"{quality['so_dong_bi_loai']:,}")
-    c.metric("Sau làm sạch", f"{p['clean_rows']:,}")
-    if len(p["removed"]):
-        show_table(p["removed"][["customerID", "tenure", "MonthlyCharges", "TotalCharges", "Churn"]].head(20),
-                   "Các dòng chứa giá trị thiếu (TotalCharges).")
+    clean_records(p["records"])
 
     step("2.3", "Mã hóa dữ liệu (one-hot encoding)")
     shown_raw = ["customerID", "gender", "Partner", "tenure", "InternetService", "OnlineSecurity", "Contract", "PaymentMethod", "MonthlyCharges"]
@@ -700,6 +814,7 @@ def page_compare() -> None:
     runs = load_runs(RUNS)
     if not runs:
         st.info("Chưa có lần huấn luyện nào.")
+        st.button("Sang Bước 5 · Dự đoán", on_click=go, args=("5. Dự đoán",), key="to_step5_empty")
         return
     table_ = comparison_table(runs)
     labels = {r["run_id"]: run_label(r) for r in runs}
@@ -742,6 +857,7 @@ def page_compare() -> None:
                    .style.format({"R² test": "{:.3f}", "RMSE test": "{:.2f}", "MAE test": "{:.2f}", "Số dòng": "{:,}"}),
                    "Kết quả hồi quy tuyến tính theo lần chạy.")
     st.download_button("Tải bảng so sánh (CSV)", csv_bytes(table_.drop(columns=["Lần chạy", "Mô hình"])), "so_sanh_lan_chay.csv", "text/csv")
+    st.button("Sang Bước 5 · Dự đoán", on_click=go, args=("5. Dự đoán",), key="to_step5", type="primary")
 
 
 def render_prediction_result(result: pd.DataFrame) -> None:

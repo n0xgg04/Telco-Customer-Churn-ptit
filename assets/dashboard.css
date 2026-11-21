@@ -84,3 +84,12 @@ table.report .r { text-align: right; }
 @media (max-width: 700px) {
   .block-container { padding: 3rem 1rem 2rem; }
 }
+
+/* Bước 2.2: thẻ bấm được (tất cả / bị loại / còn lại) */
+[class*="st-key-clean_card_"] button { justify-content: flex-start; padding: 12px 16px; min-height: 78px;
+  background: #fff; color: var(--text); border: 1px solid var(--line); text-align: left; }
+[class*="st-key-clean_card_"] button p { font-size: 13px; color: var(--muted); }
+[class*="st-key-clean_card_"] button strong { display: block; font-size: 26px; font-weight: 600; color: var(--text); margin-top: 2px; }
+[class*="st-key-clean_card_"] button[kind="primary"] { background: #eef3f9; border: 2px solid #1f4e79; }
+[class*="st-key-clean_card_"] button:hover { border-color: #1f4e79; color: var(--text); }
+.st-key-clean_card_removed button strong { color: #c0392b; }

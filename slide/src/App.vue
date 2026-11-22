@@ -18,6 +18,7 @@ const assets = import.meta.glob('../images/streamlit-*.png', { eager: true, impo
 const asset = (file) => assets[`../images/${file}`]
 const slideNumber = (index) => String(index + 1).padStart(2, '0')
 const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL || 'http://127.0.0.1:8501'
+const coverTitle = slides[0].statements[0].replace('RỜI BỎ', 'RỜI\u00a0BỎ')
 const indexFromHash = () => {
   const match = window.location.hash.match(/^#slide-(\d+)$/)
   const index = match ? Number(match[1]) - 1 : 0
@@ -35,6 +36,9 @@ const zoomed = ref(null)
 const isFullscreen = ref(false)
 const comparisonSummary = ['Accuracy và Precision cao nhất', 'Recall và ROC-AUC cao nhất', 'F1 test cao nhất, dùng 16 đặc trưng']
 const closingMetrics = [['0,6077', 'F1 lớp rời bỏ'], ['76,20%', 'Recall'], ['285/374', 'Khách rời bỏ được phát hiện']]
+const count = (value) => Number(value.replaceAll('.', ''))
+const smoteTable = slides.find(({ layout }) => layout === 'smote').table
+const smoteMax = Math.max(...smoteTable.rows.flatMap((row) => row.slice(1, 3).map(count)))
 let panelTrigger
 
 function syncSlide() {
@@ -146,9 +150,11 @@ onUnmounted(() => {
         </header>
 
         <div v-if="slide.layout === 'cover'" class="cover">
-          <div class="chapter">IBM Telco Customer Churn</div>
-          <h1 id="slide-heading" ref="heading" tabindex="-1">{{ slide.statements[0] }}</h1>
-          <SlidePoints :points="slide.points" />
+          <div class="cover-copy">
+            <div class="chapter">IBM Telco Customer Churn</div>
+            <h1 id="slide-heading" ref="heading" tabindex="-1">{{ coverTitle }}</h1>
+            <SlidePoints :points="slide.points" />
+          </div>
           <ol class="flow cover-flow">
             <li v-for="step in coverFlow" :key="step">{{ step }}</li>
           </ol>
@@ -161,21 +167,46 @@ onUnmounted(() => {
 
         <div v-else-if="slide.layout === 'comparison'" class="stack slide-body">
           <p class="lead">{{ slide.statements[0] }}</p>
-          <SlideTable :table="slide.table" :best="comparisonBest" />
-          <div class="tiles comparison-cards">
-            <div v-for="([name], index) in slide.table.rows" :key="name" class="tile">
-              <h2>{{ name }}</h2><p>{{ comparisonSummary[index] }}</p>
+          <SlideTable :table="slide.table" :best="comparisonBest">
+            <template #row-note="{ rowIndex }">
+              <span class="row-note">{{ comparisonSummary[rowIndex] }}</span>
+            </template>
+          </SlideTable>
+        </div>
+
+        <div v-else-if="slide.layout === 'smote'" class="split slide-body">
+          <figure class="chart-sheet">
+            <figcaption>Phân bố lớp trên tập huấn luyện</figcaption>
+            <div v-for="([phase, ...values]) in smoteTable.rows" :key="phase" class="smote-group">
+              <h2>{{ phase }} <span>{{ values[2] }} hồ sơ</span></h2>
+              <div v-for="(value, index) in values.slice(0, 2)" :key="smoteTable.header[index + 1]" class="smote-row">
+                <span>{{ smoteTable.header[index + 1] }}</span>
+                <div class="smote-track" aria-hidden="true">
+                  <div :class="{ churn: index === 1 }" :style="{ width: count(value) / smoteMax * 100 + '%' }"></div>
+                </div>
+                <strong>{{ value }}</strong>
+              </div>
             </div>
+            <button type="button" class="source-link" @click="showImage">Xem biểu đồ gốc trên Streamlit</button>
+          </figure>
+          <div class="stack">
+            <p class="banner">{{ slide.statements[0] }}</p>
+            <SlidePoints :points="slide.points" />
           </div>
         </div>
 
         <div v-else-if="slide.layout === 'matrix'" class="split slide-body">
           <div class="chart-sheet">
             <h2>{{ slide.statements[0] }}</h2>
-            <SlideTable class="matrix-table" :table="slide.table" />
+            <SlideTable class="matrix-table" :table="slide.table">
+              <template #value="{ value }">
+                <strong>{{ value.slice(0, value.indexOf(' ')) }}</strong>
+                <span>{{ value.slice(value.indexOf(' ') + 1) }}</span>
+              </template>
+            </SlideTable>
           </div>
           <div class="stack">
-            <div v-for="(point, index) in slide.points.slice(0, 2)" :key="point" class="tile metric">
+            <div v-for="(point, index) in slide.points.slice(0, 2)" :key="point" class="metric">
               <span>{{ index === 0 ? 'Recall' : 'Precision' }}</span>
               <strong>{{ index === 0 ? '76,20%' : '50,53%' }}</strong>
               <span>{{ index === 0 ? '285 / 374 khách rời bỏ' : '285 / 564 cảnh báo' }}</span>
@@ -187,6 +218,9 @@ onUnmounted(() => {
         <div v-else-if="slide.layout === 'coefficients'" class="split slide-body">
           <figure class="chart-sheet">
             <figcaption>{{ slide.statements[0] }}</figcaption>
+            <div class="coefficient-axis" aria-hidden="true">
+              <div><span>−0,6</span><span>0</span><span>+0,6</span></div>
+            </div>
             <ul class="coefficient-chart">
               <li v-for="[name, value] in slide.table.rows" :key="name">
                 <span>{{ name }}</span>
@@ -202,8 +236,8 @@ onUnmounted(() => {
 
         <div v-else-if="slide.layout === 'closing'" class="stack slide-body">
           <h2 class="result-label">{{ slide.statements[1] }}</h2>
-          <dl class="tiles">
-            <div v-for="[value, label] in closingMetrics" :key="label" class="tile metric"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+          <dl class="metric-band">
+            <div v-for="[value, label] in closingMetrics" :key="label" class="metric"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
           </dl>
           <div class="split closing-columns">
             <section v-for="(label, index) in [slide.statements[0], slide.statements[3]]" :key="label">
@@ -245,7 +279,6 @@ onUnmounted(() => {
                 <p class="detail">{{ slide.statements[0] }}</p>
                 <p class="banner">{{ slide.statements[1] }} · MonthlyCharges</p>
               </template>
-              <p v-if="slide.layout === 'smote'" class="banner">{{ slide.statements[0] }}</p>
               <p v-if="slide.layout === 'scaling'" class="detail">Bảng minh họa trên train gốc. Scaler Logistic được fit sau SMOTE.</p>
               <p v-if="slide.layout === 'retraining'" class="banner">{{ slide.statements[1] }}</p>
               <a v-if="slide.layout === 'quality'" class="source-link" :href="dataSource" target="_blank" rel="noopener">Nguồn dữ liệu IBM Telco ↗</a>
@@ -264,7 +297,7 @@ onUnmounted(() => {
         </div>
 
         <footer class="slide-footer" aria-hidden="true">
-          <span>Telco Customer Churn</span><span>{{ slideNumber(currentIndex) }} / {{ slides.length }}</span>
+          <span>{{ slideNumber(currentIndex) }} / {{ slides.length }}</span>
         </footer>
       </article>
       <div class="sr-only" role="status">Slide {{ currentIndex + 1 }} trên {{ slides.length }}. {{ slide.title }}</div>
@@ -273,8 +306,8 @@ onUnmounted(() => {
     <nav class="controls" :inert="Boolean(panel)" aria-label="Điều khiển trình chiếu">
       <button type="button" aria-label="Slide trước" title="Slide trước (←)" :disabled="currentIndex === 0" @click="go(currentIndex - 1)"><Icon :icon="previousIcon" /></button>
       <button type="button" aria-label="Slide tiếp theo" title="Slide tiếp theo (→)" :disabled="currentIndex === slides.length - 1" @click="go(currentIndex + 1)"><Icon :icon="nextIcon" /></button>
-      <button type="button" aria-label="Mục lục" title="Mục lục (M)" @click="openPanel('outline', $event.currentTarget)"><Icon :icon="listIcon" /></button>
-      <button type="button" aria-label="Lời thoại" title="Lời thoại (N)" @click="openPanel('notes', $event.currentTarget)"><Icon :icon="notesIcon" /></button>
+      <button type="button" aria-label="Mục lục" title="Mục lục (M)" @click="openPanel('outline', $event.currentTarget)"><Icon :icon="listIcon" /><span class="control-label">Mục lục</span></button>
+      <button type="button" aria-label="Lời thoại" title="Lời thoại (N)" @click="openPanel('notes', $event.currentTarget)"><Icon :icon="notesIcon" /><span class="control-label">Lời thoại</span></button>
       <button type="button" :aria-label="isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'" title="Toàn màn hình (F)" @click="toggleFullscreen"><Icon :icon="isFullscreen ? minimizeIcon : maximizeIcon" /></button>
     </nav>
 

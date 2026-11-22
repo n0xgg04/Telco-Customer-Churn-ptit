@@ -13,9 +13,9 @@ defineProps({
       </thead>
       <tbody>
         <tr v-for="([label, ...values], rowIndex) in table.rows" :key="rowIndex">
-          <th scope="row">{{ label }}</th>
+          <th scope="row">{{ label }}<slot name="row-note" :row-index="rowIndex" /></th>
           <td v-for="(value, column) in values" :key="column" :class="{ best: best[column] === parseFloat(value.replace(',', '.')) }">
-            {{ value }}
+            <slot name="value" :value="value">{{ value }}</slot>
           </td>
         </tr>
       </tbody>

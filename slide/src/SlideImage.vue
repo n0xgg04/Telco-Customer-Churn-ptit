@@ -1,17 +1,16 @@
-<script setup>
+﻿<script setup>
 import { Icon } from '@iconify/vue'
 import expandIcon from '@iconify-icons/lucide/expand'
 
 defineProps({
   src: { type: String, required: true },
   alt: { type: String, required: true },
-  crop: Boolean,
 })
 defineEmits(['zoom'])
 </script>
 
 <template>
-  <button type="button" class="media-button" :class="{ 'media-button--recall': crop }" :aria-label="`Phóng to ảnh. ${alt}`" @click="$emit('zoom')">
+  <button type="button" class="media-button" :aria-label="`Phóng to ảnh. ${alt}`" @click="$emit('zoom')">
     <img :src="src" :alt="alt">
     <span class="zoom-icon" aria-hidden="true"><Icon :icon="expandIcon" /></span>
   </button>

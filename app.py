@@ -176,10 +176,10 @@ def overview() -> None:
     selected_scores = scores_for("Hồi quy logistic (sau điều chỉnh)")
     page_header("Mô tả dữ liệu", "Báo cáo · Chương 2–3")
     for col, (label, value, help_text) in zip(st.columns(4), [
-            ("Số quan sát (sau làm sạch)", f"{len(df):,}", "Số khách còn lại sau làm sạch."),
-            ("Churn = Yes", f"{churned:,}", "Số khách đã rời bỏ."),
-            ("Tỷ lệ rời bỏ", f"{churn_rate:.1%}", "Churn = Yes / tổng số quan sát."),
-            ("Recall lớp 1 (hồi quy logistic)", f"{selected_scores['recall_churn_1']:.1%}", METRIC_HELP["recall_churn_1"])]):
+            ("Số quan sát sau làm sạch", f"{len(df):,}", "Số khách còn lại sau làm sạch."),
+            ("Khách đã rời bỏ", f"{churned:,}", "Số khách đã rời bỏ."),
+            ("Tỷ lệ rời bỏ", f"{churn_rate:.1%}", "Số khách rời bỏ / tổng số quan sát."),
+            ("Độ nhạy lớp rời bỏ, hồi quy logistic", f"{selected_scores['recall_churn_1']:.1%}", METRIC_HELP["recall_churn_1"])]):
         col.metric(label, value, help=help_text)
 
     quality = metrics["data_quality"]
@@ -189,12 +189,12 @@ def overview() -> None:
     section("Chất lượng dữ liệu")
     report_table([
         ["Tổng quan bộ dữ liệu", f"{quality['so_dong_ban_dau']:,} quan sát, 21 trường"],
-        ["Giá trị thiếu (Missing value)", ", ".join(f"{k}: {v}" for k, v in missing.items()) + " → loại bỏ" if missing else "Không có"],
-        ["Giá trị ngoại lai (Outliers, IQR × 1,5)", f"{n_outliers}"],
-        ["Dòng bị trùng lặp (Duplicate)", f"{quality.get('so_dong_trung_hoan_toan', 0):,}"],
+        ["Giá trị thiếu", ", ".join(f"{FIELD_LABELS.get(k, k)}: {v}" for k, v in missing.items()) + " → loại bỏ" if missing else "Không có"],
+        ["Giá trị ngoại lai theo khoảng tứ phân vị × 1,5", f"{n_outliers}"],
+        ["Dòng bị trùng lặp", f"{quality.get('so_dong_trung_hoan_toan', 0):,}"],
         ["Sau làm sạch", f"{len(df):,} quan sát"]],
         ["Kiểm tra", "Kết quả"], "Chất lượng dữ liệu.")
-    section("Tenure và Churn theo loại hợp đồng")
+    section("Thời gian sử dụng và rời bỏ theo loại hợp đồng")
     views = {"Số khách": "customers", "Đã rời bỏ": "churned", "Tỷ lệ rời bỏ": "rate"}
     view = st.radio("Chỉ số", list(views), horizontal=True, key="overview_view", label_visibility="collapsed")
     field = views[view]
@@ -213,11 +213,11 @@ def overview() -> None:
         color=color, order=alt.Order("Hợp đồng:N"),
         tooltip=["Hợp đồng:N", alt.Tooltip("month:Q", title="Từ tháng"), alt.Tooltip(f"{field}:Q", title=view, format=".1%" if field == "rate" else ",d")])
     mark = base.mark_line(strokeWidth=2) if field == "rate" else base.mark_area(opacity=.85)
-    show_chart(mark.properties(height=290), f"{view} theo tenure và Contract.")
+    show_chart(mark.properties(height=290), f"{view} theo thời gian sử dụng và loại hợp đồng.")
 
     left, right = st.columns([1.2, 1], gap="large")
     with left:
-        section("Biến phân loại và biến Churn")
+        section("Biến phân loại và tình trạng rời bỏ")
         features = ["Contract", "InternetService", "PaymentMethod", "TechSupport", "OnlineSecurity"]
         groups = pd.concat([group_summary(df, f).assign(feature=f) for f in features]).sort_values("rate", ascending=False)
         top = groups.head(10).assign(feature=lambda d: d.feature.map(FIELD_LABELS))
@@ -226,7 +226,7 @@ def overview() -> None:
             "10 nhóm khách hàng có tỷ lệ rời bỏ cao nhất.",
             column_config={"Tỷ lệ": st.column_config.ProgressColumn("Tỷ lệ", min_value=0, max_value=1, format="percent", width="medium")})
     with right:
-        section("tenure × MonthlyCharges")
+        section("Thời gian sử dụng × phí hàng tháng")
         tenure_bins = [0, 6, 12, 24, 36, 48, 60, 73]
         tenure_names = ["0–5", "6–11", "12–23", "24–35", "36–47", "48–59", "60–72"]
         grid = df.assign(t=pd.cut(df.tenure, tenure_bins, right=False, labels=tenure_names),
@@ -242,7 +242,7 @@ def overview() -> None:
                                 alt.value("#f4f5f7")),
             tooltip=[alt.Tooltip("t:O", title="Tháng dùng"), alt.Tooltip("m:O", title="Phí từ"),
                      alt.Tooltip("n:Q", title="Khách"), alt.Tooltip("rate:Q", title="Tỷ lệ", format=".1%")])
-        show_chart(heat.properties(height=260), "Tỷ lệ rời bỏ theo tenure và MonthlyCharges.")
+        show_chart(heat.properties(height=260), "Tỷ lệ rời bỏ theo thời gian sử dụng và phí hàng tháng.")
 
 
 def exploration() -> None:

@@ -1,6 +1,6 @@
 # Telco Churn · Web trình chiếu
 
-Web Vue 3 gồm 15 slide theo [kịch bản thuyết trình](doc/kich-ban.md). Khi mở trang, slide đầu hiển thị ngay trong khung 16:9 vừa với cửa sổ.
+Web Vue 3 gồm 15 slide theo [nội dung Telco theo khung mẫu](doc/noi-dung-telco-theo-khung-slide-mau.md), tham khảo bố cục và màu sắc của [PDF mẫu](learn/slide.pdf). Khi mở trang, slide đầu hiển thị ngay trong khung 16:9 vừa với cửa sổ. Nội dung bảng và ghi chú được đọc từ Markdown; các biểu đồ và phần tóm tắt được trình bày riêng trong `src/App.vue` và `src/slides.js`.
 
 ## Chạy trên máy
 
@@ -15,7 +15,7 @@ Mở địa chỉ Vite in trong terminal, mặc định là [http://127.0.0.1:51
 
 - **← / →** hoặc **Page Up / Page Down** để đổi slide. **Space** chuyển tiếp khi con trỏ bàn phím ở nội dung slide. **Home / End** về slide đầu hoặc cuối.
 - **F** bật hoặc tắt toàn màn hình của trình duyệt. **Esc** đóng ảnh, đóng bảng bên hoặc thoát toàn màn hình.
-- **M** mở mục lục. **N** mở lời thoại. Đưa chuột xuống giữa mép dưới để hiện các nút điều khiển.
+- **M** mở mục lục. **N** mở ghi chú thuyết trình của slide hiện tại. Đưa chuột xuống giữa mép dưới để hiện các nút điều khiển.
 - Bấm vào ảnh để phóng to. Nút demo ở slide 14 mở Streamlit trên cổng `8501` theo mặc định. Có thể đặt `VITE_DASHBOARD_URL` trước khi chạy Vite nếu ứng dụng dùng địa chỉ khác.
 
 Ảnh chụp lưu trong [images](images/). Để tạo bản build tĩnh, chạy `npm.cmd run build`. Có thể xem bản build bằng `npm.cmd run preview`.

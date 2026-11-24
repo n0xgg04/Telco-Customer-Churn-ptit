@@ -73,15 +73,11 @@ def click_label(app, label):
 
 def test_all_pages_and_model_details(dashboard):
     app = dashboard
-    for page in ["Thống kê mô tả", "Kỹ thuật khai phá", "1. Dữ liệu", "2. Tiền xử lý", "3. Huấn luyện", "4. So sánh", "5. Dự đoán", "Hướng dẫn sử dụng"]:
+    for page in ["Thống kê mô tả", "1. Dữ liệu", "2. Tiền xử lý", "3. Huấn luyện", "4. So sánh", "5. Dự đoán", "Hướng dẫn sử dụng"]:
         app.radio(key="navigation").set_value(page).run()
         assert_healthy(app)
     for topic in app.selectbox(key="guide_topic").options:
         app.selectbox(key="guide_topic").select(topic).run()
-        assert_healthy(app)
-    app.radio(key="navigation").set_value("Kỹ thuật khai phá").run()
-    for name in ["Hồi quy logistic (sau điều chỉnh)", "Hồi quy logistic (ban đầu)", "Cây quyết định"]:
-        next(box for box in app.selectbox if box.label == "Mô hình").select(name).run()
         assert_healthy(app)
 
 

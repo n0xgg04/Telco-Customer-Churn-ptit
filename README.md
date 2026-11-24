@@ -2,7 +2,7 @@
 
 Dự án Python triển khai theo báo cáo **Khai phá dữ liệu về tỷ lệ rời bỏ khách hàng – Nhóm 1** được cung cấp. Đây là bản triển khai thực hành *tham chiếu phương pháp*, không cam kết tái tạo chính xác hệ số và số liệu do báo cáo nêu (vì cách chia tập và xử lý rò rỉ dữ liệu được cải tiến).
 
-Hướng dẫn đầy đủ về từng trang, chỉ số, biểu đồ và định dạng CSV nằm trong [HUONG_DAN_GIAO_DIEN.md](HUONG_DAN_GIAO_DIEN.md). Dashboard mới có menu trái gồm **Mô tả dữ liệu**, **Thống kê mô tả**, **Kỹ thuật khai phá**, năm bước **Demo huấn luyện lại** và **Hướng dẫn sử dụng**. Có thể đọc và tải tài liệu ngay trong ứng dụng.
+Hướng dẫn đầy đủ về từng trang, chỉ số, biểu đồ và định dạng CSV nằm trong [HUONG_DAN_GIAO_DIEN.md](HUONG_DAN_GIAO_DIEN.md). Dashboard mới có menu trái gồm **Mô tả dữ liệu**, **Thống kê mô tả**, năm bước **Demo huấn luyện lại** và **Hướng dẫn sử dụng**. Có thể đọc và tải tài liệu ngay trong ứng dụng.
 
 ## 1. Chạy trên Windows 10/11 (VS Code, PowerShell)
 

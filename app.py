@@ -18,8 +18,8 @@ from src.retrain import (
 )
 from src.schema import PREDICT_REQUIRED, RAW_COLUMNS
 from src.dashboard import (
-    FIELD_LABELS, METRIC_HELP, METRIC_LABELS, RISK_LABELS,
-    confusion_from_report, feature_label, group_summary, prediction_display,
+    FIELD_LABELS, METRIC_HELP, RISK_LABELS,
+    feature_label, group_summary, prediction_display,
     validate_prediction_data, value_label,
 )
 
@@ -43,7 +43,7 @@ EVAL_MODELS = {
 CLS_METRICS = {"recall_churn_1": "Recall", "precision_churn_1": "Precision", "f1_churn_1": "F1-score",
                "roc_auc": "ROC AUC", "accuracy": "Accuracy"}
 LIN_METRICS = {"r2_test": "R-squared (kiểm tra)", "rmse_test": "RMSE (kiểm tra)", "mae_test": "MAE (kiểm tra)"}
-PAGES = ["Mô tả dữ liệu", "Thống kê mô tả", "Kỹ thuật khai phá",
+PAGES = ["Mô tả dữ liệu", "Thống kê mô tả",
          "1. Dữ liệu", "2. Tiền xử lý", "3. Huấn luyện", "4. So sánh", "5. Dự đoán",
          "Hướng dẫn sử dụng"]
 
@@ -137,21 +137,6 @@ def rate_chart(summary: pd.DataFrame, height: int = 260):
                  alt.Tooltip("churned:Q", title="Đã rời bỏ", format=","), alt.Tooltip("rate:Q", title="Tỷ lệ", format=".1%")])
     return (base.mark_bar(color=CHURN, size=20)
             + base.mark_text(align="left", dx=6, fontSize=12).encode(text=alt.Text("rate:Q", format=".1%"))).properties(height=height)
-
-
-def parse_report(text: str) -> list[list[str]]:
-    """Dòng của classification_report sklearn → hàng bảng (giống Bảng 7, 9 trong báo cáo)."""
-    names = {"0": "0", "1": "1", "accuracy": "Accuracy", "macro avg": "Macro avg", "weighted avg": "Weighted avg"}
-    rows = []
-    for line in text.splitlines():
-        parts = line.split()
-        for key, name in names.items():
-            if parts and " ".join(parts[:len(key.split())]) == key:
-                values = parts[len(key.split()):]
-                if key == "accuracy":
-                    values = ["", "", *values]
-                rows.append([name, *values])
-    return rows
 
 
 def scores_for(name: str) -> dict:
@@ -329,106 +314,6 @@ def exploration() -> None:
         preview = searched if limit == "Tất cả" else searched.head(limit)
         st.dataframe(prediction_display(preview), hide_index=True, width="stretch", height=420)
         st.download_button("Tải dữ liệu đã lọc CSV", csv_bytes(searched), "telco_filtered.csv", "text/csv")
-
-
-def model_evaluation() -> None:
-    page_header("Kỹ thuật khai phá", "Báo cáo · Chương 6")
-    comparison = pd.DataFrame({name: scores_for(name) for name in EVAL_MODELS}).T[list(METRIC_LABELS)]
-    left, _ = st.columns([1, 1.2], gap="large")
-    with left:
-        criterion = st.selectbox("Chỉ số so sánh", list(METRIC_LABELS), format_func=lambda x: METRIC_LABELS[x])
-        comparison_plot = comparison[criterion].rename("value").rename_axis("model").reset_index()
-        base = alt.Chart(comparison_plot).encode(y=alt.Y("model:N", title=None, sort="-x", axis=alt.Axis(labelLimit=260)),
-            x=alt.X("value:Q", title=None, scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%" if criterion != "roc_auc" else ".1f")),
-            tooltip=[alt.Tooltip("model:N", title="Mô hình"), alt.Tooltip("value:Q", title="Chỉ số", format=".3f")])
-        show_chart((base.mark_bar(color=RETAIN, size=26) + base.mark_text(align="left", dx=8, fontSize=12).encode(text=alt.Text("value:Q", format=".1%" if criterion != "roc_auc" else ".3f"))).properties(height=220), "So sánh các mô hình phân loại trên tập kiểm tra.")
-    section("So sánh các mô hình trên tập kiểm tra")
-    short_names = {key: label.split(" · ")[0] for key, label in METRIC_LABELS.items()}
-    formats = {name: "{:.1%}" if key != "roc_auc" else "{:.3f}" for key, name in short_names.items()}
-    st.dataframe(comparison.rename(columns=short_names).style.format(formats), width="stretch")
-    selected = st.selectbox("Mô hình", list(EVAL_MODELS))
-    selected_scores = scores_for(selected)
-    for col, (key, label) in zip(st.columns(5), METRIC_LABELS.items()):
-        col.metric(label.split(" · ")[0], f"{selected_scores[key]:.3f}" if key == "roc_auc" else f"{selected_scores[key]:.1%}", help=METRIC_HELP[key])
-    results, interpretation = st.tabs(["Báo cáo phân loại", "Diễn giải kết quả"])
-    with results:
-        tag = EVAL_MODELS[selected][2]
-        report_path = OUTPUT / "tables" / f"classification_report_{tag}.txt"
-        if report_path.exists():
-            try:
-                counts = confusion_from_report(selected_scores, report_path.read_text(encoding="utf-8"))
-            except ValueError as exc:
-                st.warning(str(exc))
-            else:
-                report_table(parse_report(report_path.read_text(encoding="utf-8")),
-                             ["", "Precision", "Recall", "F1-score", "Support"], f"Báo cáo phân loại · {selected}.", {1, 2, 3, 4})
-                a, b = st.columns([1, 1.05], gap="large")
-                with a, card():
-                    section("Ma trận nhầm lẫn")
-                    matrix = pd.DataFrame([{"Thực tế": actual, "Dự đoán": predicted, "Số khách": counts[key], "Loại": key.upper()}
-                        for actual, predicted, key in [("0 · Không rời bỏ", "0 · Không rời bỏ", "tn"), ("0 · Không rời bỏ", "1 · Rời bỏ", "fp"), ("1 · Rời bỏ", "0 · Không rời bỏ", "fn"), ("1 · Rời bỏ", "1 · Rời bỏ", "tp")]])
-                    base = alt.Chart(matrix).encode(x=alt.X("Dự đoán:N", sort=["0 · Không rời bỏ", "1 · Rời bỏ"], title="Predicted label", axis=alt.Axis(labelAngle=0, orient="top")), y=alt.Y("Thực tế:N", sort=["0 · Không rời bỏ", "1 · Rời bỏ"], title="True label"))
-                    cells = base.mark_rect(stroke="#ffffff", strokeWidth=3).encode(color=alt.Color("Số khách:Q", scale=alt.Scale(range=["#eef2f7", "#7aa2cc"], interpolate="rgb"), legend=None), tooltip=["Thực tế:N", "Dự đoán:N", "Số khách:Q", "Loại:N"])
-                    numbers = base.mark_text(fontSize=28, fontWeight=600).encode(text="Số khách:Q")
-                    show_chart((cells + numbers).properties(height=270), f"Ma trận nhầm lẫn · {selected}.")
-                with b:
-                    section("Bốn ô của ma trận")
-                    c1, c2 = st.columns(2)
-                    c1.metric("TP · Dự đoán đúng lớp 1", f"{counts['tp']:,}")
-                    c2.metric("FN · Bỏ sót lớp 1", f"{counts['fn']:,}")
-                    c1.metric("FP · Dự đoán sai lớp 1", f"{counts['fp']:,}")
-                    c2.metric("TN · Dự đoán đúng lớp 0", f"{counts['tn']:,}")
-        else:
-            st.info("Chưa có báo cáo phân loại. Chạy lại pipeline.")
-        if "cv_recall_each_fold" in selected_scores:
-            with card():
-                section("Stratified K-Fold Cross-Validation (5 fold)")
-                folds = pd.DataFrame({"Fold": [f"Fold {i + 1}" for i in range(len(selected_scores['cv_recall_each_fold']))], "Recall": selected_scores["cv_recall_each_fold"]})
-                a, b = st.columns([1.5, 1])
-                with a:
-                    cv = alt.Chart(folds).mark_bar(color=RETAIN, size=36).encode(x=alt.X("Fold:N", title=None, axis=alt.Axis(labelAngle=0)), y=alt.Y("Recall:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", tickCount=4), title=None), tooltip=["Fold:N", alt.Tooltip("Recall:Q", format=".1%")]).properties(height=200)
-                    show_chart(cv, "Recall lớp 1 qua từng fold.")
-                with b:
-                    st.metric("Recall trung bình qua các fold", f"{selected_scores['cv_recall_mean']:.1%}")
-                    st.metric("Độ chính xác trung bình qua các fold", f"{selected_scores['cv_accuracy_mean']:.1%}")
-        else:
-            st.caption("Không chạy CV cho cây quyết định.")
-    with interpretation:
-        if selected.startswith("Hồi quy logistic"):
-            filename = "logistic_selected_coefficients.csv" if selected == "Hồi quy logistic (sau điều chỉnh)" else "logistic_full_coefficients.csv"
-            coefficients = table(filename)
-            if not coefficients.empty:
-                coefficients["Đặc trưng"] = coefficients.feature.map(feature_label)
-                coefficients["Chiều tác động"] = coefficients.coefficient_scaled.map(lambda x: "Tăng điểm" if x >= 0 else "Giảm điểm")
-                section("Hệ số hồi quy (đặc trưng đã chuẩn hóa)")
-                coef = alt.Chart(coefficients).mark_bar().encode(
-                    y=alt.Y("Đặc trưng:N", sort=alt.SortField("coefficient_scaled"), title=None, axis=alt.Axis(labelLimit=260)), x=alt.X("coefficient_scaled:Q", title="Hệ số trên đặc trưng chuẩn hóa"),
-                    color=alt.Color("Chiều tác động:N", scale=alt.Scale(domain=["Giảm điểm", "Tăng điểm"], range=[RETAIN, CHURN]), legend=alt.Legend(orient="bottom")), tooltip=["Đặc trưng:N", alt.Tooltip("coefficient_scaled:Q", title="Hệ số", format=".3f")]).properties(height=max(350, len(coefficients) * 25))
-                show_chart(coef, f"Hệ số {selected.lower()}.")
-        else:
-            section("Cây quyết định (max_depth = 4, criterion = gini)")
-            tree_image = OUTPUT / "figures" / "decision_tree.png"
-            if tree_image.exists():
-                st.image(str(tree_image), width="stretch")
-                st.download_button("Tải hình cây để phóng to", tree_image.read_bytes(), "decision_tree.png", "image/png")
-            with st.expander("Các nhánh quan trọng"):
-                rules = OUTPUT / "tables" / "decision_tree_rules.txt"
-                if rules.exists():
-                    st.code(rules.read_text(encoding="utf-8"))
-                leaves = table("tree_risk_groups_test.csv")
-                if not leaves.empty:
-                    st.dataframe(leaves.rename(columns={"leaf_id": "Mã lá", "customers": "Số khách test", "actual_churn_rate": "Tỷ lệ rời bỏ thực tế", "mean_model_score": "Điểm mô hình trung bình"}).style.format({"Tỷ lệ rời bỏ thực tế": "{:.1%}", "Điểm mô hình trung bình": "{:.1%}"}), hide_index=True, width="stretch")
-        with st.expander("Hồi quy tuyến tính (MonthlyCharges) và thống kê"):
-            ols = pd.DataFrame(metrics["linear_regression"]).T.rename(index={"full": "Mô hình ban đầu", "selected": "Mô hình sau khi điều chỉnh"})
-            st.dataframe(ols.rename(columns={"r2_train": "R-squared (huấn luyện)", "r2_test": "R-squared (kiểm tra)", "mae_test": "MAE", "rmse_test": "RMSE"}).style.format("{:.3f}"), width="stretch")
-            pseudo = scores_for("Hồi quy logistic (sau điều chỉnh)").get("mcfadden_pseudo_r2_train")
-            if pseudo is not None:
-                st.metric("McFadden's R-squared (hồi quy logistic)", f"{pseudo:.3f}")
-            statistical = st.selectbox("Bảng thống kê", ["VIF · hồi quy tuyến tính sau điều chỉnh", "Hệ số và p-value · hồi quy logistic", "VIF · hồi quy logistic"])
-            stat_file = {"VIF · hồi quy tuyến tính sau điều chỉnh": "ols_selected_vif.csv", "Hệ số và p-value · hồi quy logistic": "logit_selected_statsmodels_coefficients.csv", "VIF · hồi quy logistic": "logit_selected_vif.csv"}[statistical]
-            stat_data = table(stat_file)
-            if not stat_data.empty:
-                st.dataframe(stat_data, hide_index=True, width="stretch")
 
 
 def read_csvs(files) -> pd.DataFrame | None:
@@ -1148,7 +1033,7 @@ if df.empty:
     st.stop()
 
 {
-    "Mô tả dữ liệu": overview, "Thống kê mô tả": exploration, "Kỹ thuật khai phá": model_evaluation,
+    "Mô tả dữ liệu": overview, "Thống kê mô tả": exploration,
     "1. Dữ liệu": page_data, "2. Tiền xử lý": page_preprocess, "3. Huấn luyện": page_train,
     "4. So sánh": page_compare, "5. Dự đoán": predictions,
 }[page]()

@@ -1,12 +1,12 @@
 # Hướng dẫn đọc và sử dụng Telco Churn
 
-Dashboard giúp bạn trả lời ba câu hỏi: dữ liệu có gì, mô hình hoạt động ra sao và một khách hàng mới được mô hình chấm điểm như thế nào. Menu bên trái có năm mục. Nên đọc theo thứ tự **Mô tả dữ liệu → Thống kê mô tả → Kỹ thuật khai phá → 5. Dự đoán**; dùng mục **Hướng dẫn sử dụng** để tra cứu.
+Dashboard giúp bạn trả lời ba câu hỏi: dữ liệu có gì, mô hình hoạt động ra sao và một khách hàng mới được mô hình chấm điểm như thế nào. Menu bên trái có năm mục. Nên đọc theo thứ tự **Mô tả dữ liệu → Thống kê mô tả → 1–5 Demo huấn luyện lại**; dùng mục **Hướng dẫn sử dụng** để tra cứu.
 
 ## 1. Phân biệt số liệu thực tế và dự đoán
 
 **Churn** là việc khách hàng rời bỏ dịch vụ. Trong dữ liệu IBM, `Churn=Yes` là khách đã rời bỏ và `Churn=No` là khách ở lại. Đây là nhãn thực tế được ghi nhận trong bộ dữ liệu.
 
-Các trang Mô tả dữ liệu và Thống kê mô tả thống kê những nhãn này. Trang Kỹ thuật khai phá đối chiếu dự đoán với nhãn trên tập kiểm tra. Trang 5. Dự đoán chấm điểm hồ sơ bạn nhập, chưa biết kết quả thực tế của khách hàng mới.
+Các trang Mô tả dữ liệu và Thống kê mô tả thống kê những nhãn này. Trang 5. Dự đoán chấm điểm hồ sơ bạn nhập, chưa biết kết quả thực tế của khách hàng mới.
 
 Một dòng dữ liệu tương ứng một khách hàng; `customerID` chỉ là mã nhận diện và không được dùng làm đặc trưng dự đoán. Dữ liệu là ảnh chụp một thời điểm, không cung cấp lịch sử đủ để dự báo khách sẽ rời bỏ sau bao nhiêu ngày/tháng.
 
@@ -64,75 +64,7 @@ Các hình EDA và bảng kiểm định trong phần mở rộng là kết qu�
 
 Tìm theo mã khách hàng và chọn số dòng muốn xem. Nút tải CSV xuất **toàn bộ dữ liệu sau bộ lọc và tìm kiếm**, dù bảng chỉ hiển thị một số dòng. Bảng xem dùng tên tiếng Việt; CSV tải về giữ nguyên tên cột và giá trị tiếng Anh để có thể sử dụng lại trong chương trình.
 
-## 4. Mục Kỹ thuật khai phá
-
-### Ba mô hình phân loại
-
-| Mô hình | Cách hoạt động và vai trò |
-|---|---|
-| Logistic đầy đủ | Dùng bộ đặc trưng đầy đủ sau mã hóa, loại một số dummy tham chiếu; học quan hệ giữa đặc trưng và log-odds Churn |
-| Hồi quy logistic (sau điều chỉnh) | Dùng 16 đặc trưng được chọn theo báo cáo, xuất phát từ 12 cột gốc; đây là mô hình được lưu để dự đoán khách hàng mới |
-| Decision Tree | Cây quyết định sâu tối đa 4, dùng 7 đặc trưng được chọn; có thể quan sát các quy tắc phân nhánh |
-
-Chọn chỉ số ở biểu đồ để so sánh ba mô hình theo cùng một tiêu chí. Bảng giữ đầy đủ năm chỉ số. Mô hình có Accuracy cao nhất chưa chắc phù hợp nhất khi mục tiêu là hạn chế bỏ sót khách rời bỏ. Dashboard dùng Hồi quy logistic (sau điều chỉnh) theo thiết kế dự án; không có nghĩa nó đứng đầu mọi chỉ số.
-
-### Ý nghĩa các chỉ số
-
-Lớp dương là **rời bỏ**, mã hóa bằng 1; lớp âm là **ở lại**, mã hóa bằng 0.
-
-| Chỉ số | Công thức / cách đọc |
-|---|---|
-| Accuracy | `(TP + TN) / tổng số khách kiểm tra`: tỷ lệ dự đoán đúng tất cả các khách |
-| Precision | `TP / (TP + FP)`: trong những người được cảnh báo, tỷ lệ thực sự rời bỏ |
-| Recall | `TP / (TP + FN)`: trong những người thực sự rời bỏ, tỷ lệ được phát hiện |
-| F1 | `2 × Precision × Recall / (Precision + Recall)`: cân bằng hai chỉ số, không tính TN |
-| ROC AUC | Khả năng phân biệt/xếp hạng hai lớp khi xét nhiều ngưỡng; 0,5 là mức ngẫu nhiên, 1 là hoàn hảo |
-
-Với kết quả hiện tại, Hồi quy logistic (sau điều chỉnh) có Accuracy khoảng 73,9%, Precision 50,6%, Recall 75,9%, F1 60,7% và ROC AUC 0,827. Số liệu trên giao diện được đọc từ kết quả pipeline, có thể thay đổi khi chạy lại bằng dữ liệu hoặc phiên bản thư viện khác.
-
-### Ma trận nhầm lẫn
-
-Hàng là nhãn thực tế; cột là nhãn dự đoán.
-
-| | Dự đoán ở lại | Dự đoán rời bỏ |
-|---|---|---|
-| Thực tế ở lại | **TN:** nhận diện đúng khách ở lại | **FP:** cảnh báo sai một khách ở lại |
-| Thực tế rời bỏ | **FN:** bỏ sót một khách rời bỏ | **TP:** phát hiện đúng khách rời bỏ |
-
-Trong Hồi quy logistic (sau điều chỉnh) hiện tại: TN=756, FP=277, FN=90, TP=284, tổng 1.407 khách kiểm tra. Có 374 người thực sự rời bỏ, mô hình phát hiện 284 người, nên Recall = 284/374 ≈ 75,9%. Có 561 người được cảnh báo, nhưng 277 người thực tế ở lại, nên Precision = 284/561 ≈ 50,6%.
-
-Các số đếm trên giao diện được lấy từ support trong báo cáo và các chỉ số JSON đủ độ chính xác của lần huấn luyện, không điền cố định vào giao diện.
-
-### Train, test, CV và SMOTE
-
-Dữ liệu phân loại được chia 80% train và 20% test bằng `random_state=42`, phân tầng theo nhãn Churn. Mô hình học từ train; tập test được giữ lại để đánh giá.
-
-SMOTE sinh mẫu nội suy cho lớp thiểu số trên tập train để giảm mất cân bằng. Trong Logistic, SMOTE nằm trong pipeline cùng StandardScaler và LogisticRegression, được fit lại ở từng fold cross-validation. Tập test không được SMOTE.
-
-Cross-validation 5 folds chia tập train thành 5 phần, lần lượt giữ một phần để đánh giá. Biểu đồ hiển thị Recall từng fold; trung bình CV là kết quả trên các phần validation của train, còn Recall test là kết quả trên tập holdout riêng. Hai số không cần giống nhau. CV Accuracy trong bảng chi tiết được tính ở lượt chấm điểm tương ứng trong pipeline.
-
-### Hệ số Logistic và cây quyết định
-
-Hệ số Logistic dương đẩy điểm về phía Churn khi giữ các đặc trưng khác không đổi; hệ số âm đẩy theo chiều ngược lại. Hệ số được học trên đặc trưng chuẩn hóa nên không thể diễn giải trực tiếp thành số phần trăm rủi ro tăng/giảm. Đây là giải thích toàn cục của mô hình, không phải phân rã lý do cho một khách hàng cụ thể.
-
-Các nhóm tham chiếu của Hồi quy logistic (sau điều chỉnh) gồm DSL cho Internet, hợp đồng một năm, séc điện tử cho thanh toán; các biến Yes/No dùng No=0 và Yes=1, giới tính Female=0 và Male=1. Với các biến số, thay đổi một đơn vị sau chuẩn hóa khác với thay đổi một đơn vị gốc.
-
-Trong hình cây: điều kiện ở mỗi nút quyết định nhánh; `samples` là số mẫu huấn luyện tại nút; `gini` phản ánh độ trộn hai lớp; `value` mô tả phân bố lớp theo cách biểu diễn của phiên bản sklearn; `class` là lớp dự đoán. Không mặc định `value` luôn là số đếm tuyệt đối ở mọi phiên bản.
-
-Bảng nhóm lá cây thống kê khách trên tập test rơi vào từng lá và tỷ lệ Churn thực tế của họ. Lá có ít khách cần được đọc cùng cột số lượng. Không diễn giải tỷ lệ một lá như xác suất chắc chắn của khách hàng mới.
-
-### OLS, VIF, p-value và pseudo R²
-
-OLS trong dự án giải thích **phí hàng tháng `MonthlyCharges`**, khác mục tiêu Churn của ba mô hình phân loại. Vì vậy không đặt R² OLS cạnh Accuracy để chọn mô hình dự đoán Churn.
-
-- **R² test:** mức mô hình giải thích biến thiên của phí trên tập kiểm tra; có thể âm nếu mô hình kém hơn dự đoán bằng trung bình trong cách tính R².
-- **MAE:** trung bình sai số tuyệt đối; cùng đơn vị với phí gốc.
-- **RMSE:** căn bậc hai trung bình sai số bình phương; phạt sai số lớn mạnh hơn MAE.
-- **VIF:** mức một biến có thể được giải thích bởi các biến còn lại, dùng để xem đa cộng tuyến; cao là dấu hiệu cần kiểm tra, không tự động đồng nghĩa phải xóa biến.
-- **p-value statsmodels:** được fit trên train gốc không SMOTE để phục vụ phân tích suy diễn. Mô hình này khác classifier sklearn dùng dự đoán nên hệ số có thể khác.
-- **McFadden pseudo R²:** so sánh log-likelihood mô hình Logistic với mô hình chỉ có hằng số. Không hiểu giá trị 0,278 là giải thích 27,8% phương sai Churn như R² OLS.
-
-## 5. Mục Dự đoán
+## 4. Mục Dự đoán
 
 ### Dự đoán một khách hàng
 
@@ -198,7 +130,7 @@ Giữ nguyên tên cột, viết hoa/thường như mẫu và không để trố
 
 12 cột dự đoán là đầu vào của Hồi quy logistic (sau điều chỉnh). Mô hình này không trực tiếp dùng `MonthlyCharges`, nên biểu mẫu không yêu cầu bạn nhập phí. Điều đó không có nghĩa phí không liên quan tới Churn trong dữ liệu hay trong mô hình đầy đủ/cây.
 
-## 6. Chạy lại và kiểm tra kết quả
+## 5. Chạy lại và kiểm tra kết quả
 
 Mở PowerShell trong đúng thư mục dự án:
 

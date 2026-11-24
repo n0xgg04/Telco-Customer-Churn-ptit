@@ -42,36 +42,6 @@ Thời lượng gợi ý: Báo cáo khoảng 5 phút, Demo huấn luyện lại 
   - **Mutual Information:** Contract_Month-to-month, tenure, Contract_Two year cao nhất.
   - **Spearman:** Contract_Month-to-month tương quan dương mạnh nhất; tenure tương quan âm mạnh nhất.
 
-### Kỹ thuật khai phá (Chương 6)
-
-**Thao tác:** Đổi *Chỉ số so sánh* sang Recall (lớp 1). Ở ô *Mô hình*, chọn *Hồi quy logistic (sau điều chỉnh)*, sau đó *Hồi quy logistic (ban đầu)* và *Cây quyết định*. Mở tab *Diễn giải kết quả* và mục *Hồi quy tuyến tính (MonthlyCharges) và thống kê*.
-
-**Nói:**
-- Ba kỹ thuật của nhóm, mỗi kỹ thuật một mục tiêu (mục 1.3):
-  - **Hồi quy tuyến tính:** giải thích MonthlyCharges theo các dịch vụ.
-  - **Cây quyết định:** tìm nhóm khách có nguy cơ rời bỏ cao / khả năng ở lại cao.
-  - **Hồi quy logistic:** mô hình dự báo Churn.
-- Quy trình: chia 80% huấn luyện / 20% kiểm tra, phân tầng theo Churn, random_state = 42. Hồi quy logistic dùng SMOTE → StandardScaler → huấn luyện; tập kiểm tra không SMOTE.
-- Báo cáo phân loại tập trung vào **Recall của lớp 1**: hạn chế tối đa việc bỏ sót khách sắp rời bỏ, chấp nhận một số dự đoán sai.
-- Tab *Báo cáo phân loại*, với hồi quy logistic (sau điều chỉnh):
-  - Bảng báo cáo phân loại có cùng cấu trúc Bảng 9 trong báo cáo.
-  - Lớp 1 đạt Recall 0,76, Precision 0,51, F1-score 0,61; Accuracy 0,74.
-  - Cây quyết định có Accuracy cao hơn (0,78) nhưng Recall lớp 1 chỉ 0,49, nên nhóm chọn hồi quy logistic.
-- Ma trận nhầm lẫn: hàng là True label, cột là Predicted label. TP là dự đoán đúng lớp 1, FN là bỏ sót lớp 1, FP là dự đoán sai lớp 1, TN là dự đoán đúng lớp 0.
-- Stratified K-Fold Cross-Validation 5 fold: Recall các fold khá đều (0,74–0,79), mô hình không bị overfitting.
-- Tab *Diễn giải kết quả*:
-  - **Hệ số hồi quy logistic:** tenure có hệ số âm lớn nhất (dùng càng lâu càng ít rời bỏ). Fiber optic có hệ số dương; Two year, thanh toán tự động và OnlineSecurity có hệ số âm.
-  - **Cây quyết định (max_depth = 4, gini):**
-    - Nút gốc là Contract_Month-to-month, biến quan trọng nhất.
-    - Nhóm có nguy cơ rời bỏ cao là Month-to-month + Fiber optic + tenure ≤ 1 tháng.
-    - Nhóm có khả năng ở lại cao là hợp đồng dài hạn.
-- Mục hồi quy tuyến tính:
-  - Mô hình ban đầu có R-squared ≈ 0,999, nhưng các biến one-hot có VIF = inf (đa cộng tuyến hoàn hảo).
-  - Sau khi điều chỉnh, R-squared ≈ 0,97 và VIF đều thấp.
-  - Fiber optic, StreamingTV, StreamingMovies có hệ số lớn nhất với MonthlyCharges.
-- McFadden's R-squared của hồi quy logistic khoảng 0,28 (báo cáo: 0,37). Mức 0,2–0,4 được xem là phù hợp tốt.
-- Nếu được hỏi vì sao số liệu khác báo cáo một chút (Recall 0,76 so với 0,71): khi chạy lại, nhóm làm SMOTE bên trong từng fold và chỉ trên tập huấn luyện để tránh rò rỉ dữ liệu, nên các chỉ số lệch nhẹ. Kết luận vẫn giữ nguyên.
-
 ---
 
 ## Phần 2 · Demo huấn luyện lại
@@ -121,7 +91,7 @@ Cấu hình chọn ở bước này được dùng làm mặc định cho Bướ
   - **Hồi quy tuyến tính (Linear Regression):** OLS (cố định theo báo cáo); chọn tập đặc trưng. Biến mục tiêu là MonthlyCharges, không phải Churn.
 - Cân bằng lớp nằm trong pipeline nên được làm lại trong từng fold CV, không rò rỉ sang dữ liệu đánh giá.
 - Seed ngẫu nhiên khiến mỗi lần chia tập huấn luyện / kiểm tra khác nhau, nên **hai lần bấm cho kết quả khác nhau**. Đây là lý do cần lưu và so sánh. Seed cố định cho kết quả giống hệt khi chạy lại.
-- Đọc bảng kết quả và ma trận nhầm lẫn như ở trang Kỹ thuật khai phá.
+- Đọc bảng kết quả: Recall cho biết bắt được bao nhiêu % khách rời bỏ; ma trận nhầm lẫn có hàng là thực tế, cột là dự đoán.
 - Có thể bấm *Dùng mô hình này để dự đoán* ngay tại đây.
 
 ### Bước 4 · So sánh

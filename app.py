@@ -845,6 +845,29 @@ def page_train() -> None:
 
 
 # ---------- Bước 4 ----------
+def run_names(runs: list[dict]) -> dict:
+    """run_id → "Lần n · dd/mm hh:mm" (Lần 1 là lần cũ nhất)."""
+    ordered = sorted(runs, key=lambda r: r["created"])
+    return {r["run_id"]: f"Lần {i} · {r['created'][8:10]}/{r['created'][5:7]} {r['created'][11:16]}"
+            for i, r in enumerate(ordered, 1)}
+
+
+def run_config(run: dict, model: str) -> str:
+    """Tóm tắt cấu hình khác nhau giữa các lần chạy: cân bằng lớp, số biến, độ sâu, seed, dữ liệu."""
+    info = run["models"][model]
+    p = info.get("params", {})
+    parts = []
+    if model in CLASSIFIERS:
+        parts.append(BALANCING.get(p.get("balancing"), "?"))
+    parts.append(f"{info.get('n_features', '?')} biến")
+    if model == "decision_tree":
+        parts.append(f"sâu {p.get('max_depth')}")
+    parts.append(f"seed {run['seed']}")
+    if run["merge"].get("new_rows"):
+        parts.append(f"+{run['merge']['new_rows']:,} dòng mới")
+    return " · ".join(parts)
+
+
 def page_compare() -> None:
     page_header("Bước 4 · So sánh", "Demo · 4/5")
     runs = load_runs(RUNS)
@@ -852,48 +875,89 @@ def page_compare() -> None:
         st.info("Chưa có lần huấn luyện nào.")
         st.button("Sang Bước 5 · Dự đoán", on_click=go, args=("5. Dự đoán",), key="to_step5_empty")
         return
+    by_id = {r["run_id"]: r for r in runs}
+    names = run_names(runs)
     table_ = comparison_table(runs)
-    labels = {r["run_id"]: run_label(r) for r in runs}
-    table_["Lần chạy"] = table_.run_id.map(labels)
+    table_["Lần chạy"] = table_.run_id.map(names)
     table_["Mô hình"] = table_.model.map(MODEL_NAMES)
+    table_["Cấu hình"] = [run_config(by_id[r], m) for r, m in zip(table_.run_id, table_.model)]
     _, active = active_model_path(OUTPUT)
-    current = f"{MODEL_NAMES[active['model']]} · {labels.get(active['run_id'], active['run_id'])}" if active else "Hồi quy logistic (sau điều chỉnh)"
-    html(f'<div class="status">{len(runs)} lần chạy · Mô hình đang dùng: <b>{escape(current)}</b></div>')
+    active_key = (active["run_id"], active["model"]) if active and active["run_id"] in by_id else None
+    current = (f"{MODEL_NAMES[active['model']]} · {names[active['run_id']]}" if active_key
+               else "Hồi quy logistic (sau điều chỉnh) · mô hình gốc")
+    html(f'<div class="status">{len(runs)} lần huấn luyện · Mô hình đang dùng cho Bước 5: <b>{escape(current)}</b></div>')
 
-    cls = table_[table_.model.isin(CLASSIFIERS)]
+    cls = table_[table_.model.isin(CLASSIFIERS)].copy()
     if not cls.empty:
         section("Mô hình phân loại (Churn)")
-        metric = st.selectbox("Chọn mô hình tốt nhất theo", list(CLS_METRICS), format_func=CLS_METRICS.get, key="cmp_metric")
-        best = cls.loc[cls[metric].idxmax()]
-        html(f'<div class="result" style="--k:{GREEN}"><div class="note">Tốt nhất theo {CLS_METRICS[metric]}</div>'
-             f'<div class="big">{fmt_metric(metric, best[metric])}</div>'
-             f'<div class="note">{escape(best["Mô hình"])} · {escape(best["Lần chạy"])}</div></div>')
-        st.button("Dùng mô hình tốt nhất để dự đoán", type="primary", on_click=activate, args=(best.run_id, best.model), key="use_best")
-        recent = cls[cls.run_id.isin([r["run_id"] for r in runs[:10]])]
-        chart = alt.Chart(recent).mark_bar().encode(
-            y=alt.Y("Lần chạy:N", title=None, sort=[labels[r["run_id"]] for r in runs], axis=alt.Axis(labelLimit=340)),
-            yOffset=alt.YOffset("Mô hình:N"),
+        metric = st.radio("Xếp hạng theo", list(CLS_METRICS), format_func=CLS_METRICS.get, horizontal=True, key="cmp_metric")
+        cls = cls.sort_values(metric, ascending=False).reset_index(drop=True)
+        best = cls.iloc[0]
+        best_key = (best.run_id, best.model)
+        note = ""
+        if active_key and active_key != best_key:
+            now = cls[(cls.run_id == active_key[0]) & (cls.model == active_key[1])]
+            if not now.empty:
+                note = f" · mô hình đang dùng: {fmt_metric(metric, now.iloc[0][metric])}"
+        a, b = st.columns([3, 1], vertical_alignment="center")
+        with a:
+            html(f'<div class="result" style="--k:{GREEN}"><div class="note">Tốt nhất theo {CLS_METRICS[metric]}</div>'
+                 f'<div class="big">{fmt_metric(metric, best[metric])}</div>'
+                 f'<div class="note"><b>{escape(best["Mô hình"])}</b> · {escape(best["Lần chạy"])} · {escape(best["Cấu hình"])}{escape(note)}</div></div>')
+        if best_key == active_key:
+            b.success("Đang được dùng ở Bước 5")
+        else:
+            b.button("Dùng mô hình tốt nhất", type="primary", on_click=activate, args=best_key, key="use_best", width="stretch")
+
+        plot = cls.assign(Nhãn=cls["Lần chạy"].str.split(" · ").str[0] + " · " + cls["Mô hình"])
+        base = alt.Chart(plot).encode(
+            y=alt.Y("Nhãn:N", sort=None, title=None, axis=alt.Axis(labelLimit=260)),
             x=alt.X(f"{metric}:Q", title=CLS_METRICS[metric], scale=alt.Scale(domain=[0, 1]),
                     axis=alt.Axis(format=".0%" if metric != "roc_auc" else ".1f", tickCount=5)),
+            tooltip=["Lần chạy:N", "Mô hình:N", "Cấu hình:N", alt.Tooltip(f"{metric}:Q", format=".3f")])
+        bars = base.mark_bar(size=18).encode(
             color=alt.Color("Mô hình:N", scale=alt.Scale(domain=[MODEL_NAMES[k] for k in CLASSIFIERS], range=[GREEN, RETAIN]),
-                            legend=alt.Legend(orient="bottom", title=None)),
-            tooltip=["Lần chạy:N", "Mô hình:N", alt.Tooltip(f"{metric}:Q", format=".3f")]).properties(height=alt.Step(20))
-        show_chart(chart, f"{CLS_METRICS[metric]} của 10 lần chạy gần nhất.")
-        show_table(cls[["Lần chạy", "Mô hình", "rows", *CLS_METRICS]].rename(columns={"rows": "Số dòng", **CLS_METRICS})
-                   .style.format({v: "{:.1%}" for k, v in CLS_METRICS.items() if k != "roc_auc"} | {"ROC AUC": "{:.3f}", "Số dòng": "{:,}"}),
-                   "Báo cáo phân loại theo lần chạy.")
-        options = list(cls[["run_id", "model"]].itertuples(index=False, name=None))
-        pick = st.selectbox("Hoặc chọn một mô hình cụ thể", options, key="cmp_pick",
-                            format_func=lambda o: f"{MODEL_NAMES[o[1]]} · {labels[o[0]]}")
-        st.button("Dùng mô hình đã chọn", on_click=activate, args=pick, key="use_pick")
+                            legend=alt.Legend(orient="bottom", title=None)))
+        labels = base.mark_text(align="left", dx=6, fontSize=12).encode(
+            text=alt.Text(f"{metric}:Q", format=".1%" if metric != "roc_auc" else ".3f"))
+        show_chart((bars + labels).properties(height=alt.Step(28)), f"Xếp hạng theo {CLS_METRICS[metric]} trên tập kiểm tra (cao nhất ở trên).")
+
+        cls["Ghi chú"] = ["★ Tốt nhất" if (r, m) == best_key else "" for r, m in zip(cls.run_id, cls.model)]
+        cls["Ghi chú"] = [(g + " · " if g else "") + "● Đang dùng" if (r, m) == active_key else g
+                          for g, r, m in zip(cls["Ghi chú"], cls.run_id, cls.model)]
+        cls.insert(0, "Hạng", range(1, len(cls) + 1))
+        shown = cls[["Hạng", "Ghi chú", "Mô hình", "Lần chạy", "Cấu hình", *CLS_METRICS]].rename(columns=CLS_METRICS)
+        shown["Lần chạy"] = shown["Lần chạy"].str.split(" · ").str[0]
+        for k, name in CLS_METRICS.items():
+            if k != "roc_auc":
+                shown[name] = shown[name] * 100
+        pct = st.column_config.NumberColumn(format="%.1f%%")
+        st.caption("Bấm vào ô đầu hàng để chọn một mô hình khác.")
+        event = st.dataframe(shown, hide_index=True, width="stretch", on_select="rerun", selection_mode="single-row",
+                             key="cmp_table", column_config={
+                                 "Hạng": st.column_config.NumberColumn(width=50),
+                                 "Ghi chú": st.column_config.TextColumn(width=105),
+                                 **{CLS_METRICS[k]: pct for k in CLS_METRICS if k != "roc_auc"},
+                                 "ROC AUC": st.column_config.NumberColumn(format="%.3f")})
+        html(f'<p class="tab-cap">{numbered("Bảng", "Bảng xếp hạng các mô hình phân loại.")}</p>')
+        rows = event.selection.rows if event is not None and hasattr(event, "selection") else []
+        if rows:
+            pick = cls.iloc[rows[0]]
+            st.button(f"Dùng {pick['Mô hình']} · {pick['Lần chạy']} cho Bước 5", on_click=activate,
+                      args=(pick.run_id, pick.model), key="use_pick")
+
     lin = table_[table_.model == "linear"]
     if not lin.empty:
         section("Hồi quy tuyến tính (MonthlyCharges)")
-        show_table(lin[["Lần chạy", "rows", *LIN_METRICS]].rename(columns={"rows": "Số dòng", **LIN_METRICS})
-                   .style.format({"R² test": "{:.3f}", "RMSE test": "{:.2f}", "MAE test": "{:.2f}", "Số dòng": "{:,}"}),
-                   "Kết quả hồi quy tuyến tính theo lần chạy.")
-    st.download_button("Tải bảng so sánh (CSV)", csv_bytes(table_.drop(columns=["Lần chạy", "Mô hình"])), "so_sanh_lan_chay.csv", "text/csv")
-    st.button("Sang Bước 5 · Dự đoán", on_click=go, args=("5. Dự đoán",), key="to_step5", type="primary")
+        lin = lin.sort_values("r2_test", ascending=False)
+        st.dataframe(lin[["Lần chạy", "Cấu hình", *LIN_METRICS]].rename(columns=LIN_METRICS), hide_index=True, width="stretch",
+                     column_config={LIN_METRICS["r2_test"]: st.column_config.NumberColumn(format="%.3f"),
+                                    LIN_METRICS["rmse_test"]: st.column_config.NumberColumn(format="%.2f"),
+                                    LIN_METRICS["mae_test"]: st.column_config.NumberColumn(format="%.2f")})
+        html(f'<p class="tab-cap">{numbered("Bảng", "Hồi quy tuyến tính theo lần chạy (R-squared cao nhất ở trên).")}</p>')
+    a, b, _ = st.columns([1, 1, 2])
+    a.download_button("Tải bảng so sánh (CSV)", csv_bytes(table_.drop(columns=["Lần chạy", "Mô hình"])), "so_sanh_lan_chay.csv", "text/csv")
+    b.button("Sang Bước 5 · Dự đoán", on_click=go, args=("5. Dự đoán",), key="to_step5", type="primary")
 
 
 def render_prediction_result(result: pd.DataFrame) -> None:

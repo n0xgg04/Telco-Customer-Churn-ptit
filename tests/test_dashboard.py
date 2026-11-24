@@ -144,7 +144,7 @@ def test_retrain_flow(dashboard, tmp_path, monkeypatch):
     assert len(list(tmp_path.glob("*/run.json"))) == 2
     app.radio(key="navigation").set_value("4. So sánh").run()
     assert_healthy(app)
-    app.selectbox(key="cmp_metric").set_value("f1_churn_1").run()
+    app.radio(key="cmp_metric").set_value("f1_churn_1").run()
     assert_healthy(app)
     app.button(key="to_step5").click().run()
     assert app.radio(key="navigation").value == "5. Dự đoán"

@@ -772,23 +772,22 @@ def model_params(default_balancing: str) -> dict:
             }
     with logit_col, card():
         if st.checkbox("**Hồi quy logistic (Logistic Regression)**", value=True, key="rt_use_logit"):
-            solver = st.selectbox("Solver", ["lbfgs", "liblinear", "saga"], key="rt_logit_solver")
-            l1_ok = solver in ("liblinear", "saga")
-            penalty = st.radio("Regularization", ["l2", "l1"] if l1_ok else ["l2"], horizontal=True, key=f"rt_logit_pen_{l1_ok}",
-                               )
+            # Theo báo cáo (mục 4.4): LogisticRegression mặc định lbfgs, L2, C=1, max_iter=2000.
+            st.selectbox("Solver", ["lbfgs"], key="rt_logit_solver", disabled=True)
+            st.radio("Regularization", ["l2"], horizontal=True, key="rt_logit_pen", disabled=True)
+            st.select_slider("C (nghịch đảo mức phạt)", [1.0], value=1.0, key="rt_logit_c", disabled=True)
             chosen["logistic"] = {
-                "solver": solver, "penalty": penalty,
-                "C": st.select_slider("C (nghịch đảo mức phạt)", [0.01, 0.1, 1.0, 10.0, 100.0], value=1.0, key="rt_logit_c"),
+                "solver": "lbfgs", "penalty": "l2", "C": 1.0,
                 "balancing": st.selectbox("Cân bằng lớp", list(BALANCING), index=list(BALANCING).index(default_balancing),
                                           format_func=BALANCING.get, key="rt_logit_bal"),
                 "features": st.radio("Đặc trưng", ["report", "all"], format_func={"report": "16 biến theo báo cáo", "all": "Tất cả"}.get, key="rt_logit_feat"),
             }
     with lin_col, card():
         if st.checkbox("**Hồi quy tuyến tính (Linear Regression)**", value=True, key="rt_use_lin"):
-            algo = st.selectbox("Thuật toán", ["ols", "ridge", "lasso"], format_func={"ols": "OLS", "ridge": "Ridge (L2)", "lasso": "Lasso (L1)"}.get, key="rt_lin_algo")
+            # Theo báo cáo (mục 4.2): OLS, không có tham số phạt.
+            st.selectbox("Thuật toán", ["ols"], format_func={"ols": "OLS"}.get, key="rt_lin_algo", disabled=True)
             chosen["linear"] = {
-                "algorithm": algo,
-                "alpha": st.select_slider("Alpha", [0.01, 0.1, 0.5, 1.0, 10.0], value=1.0, key="rt_lin_alpha", disabled=algo == "ols"),
+                "algorithm": "ols", "alpha": 1.0,
                 "features": st.radio("Đặc trưng", ["report", "all"], format_func={"report": "10 biến theo báo cáo", "all": "Tất cả"}.get, key="rt_lin_feat"),
             }
             st.caption("Mục tiêu: MonthlyCharges")

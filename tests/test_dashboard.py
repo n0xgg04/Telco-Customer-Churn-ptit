@@ -137,8 +137,8 @@ def test_retrain_flow(dashboard, tmp_path, monkeypatch):
     assert_healthy(app)
     assert len(list(tmp_path.glob("*/run.json"))) == 1
     assert any(button.label == "Dùng mô hình này để dự đoán" for button in app.button)
-    app.selectbox(key="rt_logit_solver").select("saga").run()
-    app.radio(key="rt_logit_pen_True").set_value("l1").run()
+    assert app.selectbox(key="rt_logit_solver").disabled and app.selectbox(key="rt_lin_algo").disabled
+    app.selectbox(key="rt_logit_bal").set_value("class_weight").run()
     click_label(app, "Huấn luyện")
     assert_healthy(app)
     assert len(list(tmp_path.glob("*/run.json"))) == 2

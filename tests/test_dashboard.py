@@ -146,5 +146,9 @@ def test_retrain_flow(dashboard, tmp_path, monkeypatch):
     assert_healthy(app)
     app.radio(key="cmp_metric").set_value("f1_churn_1").run()
     assert_healthy(app)
+    assert len(app.dataframe[0].value) == 2  # mặc định: lần mới nhất, 2 mô hình phân loại
+    app.radio(key="cmp_scope").set_value("all").run()
+    assert_healthy(app)
+    assert len(app.dataframe[0].value) == 4  # 2 lần chạy × 2 mô hình phân loại
     app.button(key="to_step5").click().run()
     assert app.radio(key="navigation").value == "5. Dự đoán"

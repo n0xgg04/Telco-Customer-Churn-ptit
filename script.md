@@ -126,9 +126,10 @@ Cấu hình chọn ở bước này được dùng làm mặc định cho Bướ
 
 ### Bước 4 · So sánh
 
-**Thao tác:** Ở *Xếp hạng theo*, bấm lần lượt Recall, F1-score, ROC AUC và xem biểu đồ đổi thứ hạng. Bấm **Dùng mô hình tốt nhất**. Nếu muốn dùng mô hình khác, tích ô đầu hàng trong bảng xếp hạng rồi bấm nút *Dùng … cho Bước 5* hiện ra bên dưới.
+**Thao tác:** Mặc định trang so sánh **lần chạy mới nhất của từng mô hình** (cây quyết định và hồi quy logistic cùng một lần, cùng tập kiểm tra). Ở *Xếp hạng theo*, bấm lần lượt Recall, F1-score, ROC AUC và xem biểu đồ đổi thứ hạng. Bấm **Dùng mô hình tốt nhất**. Nếu muốn dùng mô hình khác, tích ô đầu hàng trong bảng xếp hạng rồi bấm nút *Dùng … cho Bước 5* hiện ra bên dưới.
 
 **Nói:**
+- Mặc định so sánh lần chạy mới nhất: hai mô hình phân loại được chấm trên cùng một tập kiểm tra nên công bằng. Chọn *Tất cả các lần chạy* để xem lịch sử học lại và chọn mô hình tốt nhất qua mọi lần.
 - Mọi lần huấn luyện đều được lưu và đánh số Lần 1, 2, 3… Cột *Cấu hình* cho biết các lần khác nhau ở đâu: cách cân bằng lớp, số biến, độ sâu cây, seed, có thêm dữ liệu mới hay không.
 - Cột *Ghi chú* đánh dấu ★ mô hình tốt nhất theo chỉ số đang chọn và ● mô hình đang được dùng ở Bước 5.
 - Chọn chỉ số thì hệ thống tự tìm mô hình tốt nhất trên toàn bộ lịch sử. Nhóm ưu tiên Recall; nếu cần cân bằng cảnh báo sai thì dùng F1.

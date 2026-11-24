@@ -886,6 +886,11 @@ def page_compare() -> None:
     current = (f"{MODEL_NAMES[active['model']]} · {names[active['run_id']]}" if active_key
                else "Hồi quy logistic (sau điều chỉnh) · mô hình gốc")
     html(f'<div class="status">{len(runs)} lần huấn luyện · Mô hình đang dùng cho Bước 5: <b>{escape(current)}</b></div>')
+    scope = st.radio("Phạm vi so sánh", ["latest", "all"], horizontal=True, key="cmp_scope",
+                     format_func={"latest": "Lần chạy mới nhất của từng mô hình", "all": "Tất cả các lần chạy"}.get)
+    if scope == "latest":
+        # Mỗi mô hình lấy lần chạy gần nhất có mô hình đó (thường là cùng một lần, cùng tập kiểm tra).
+        table_ = table_.sort_values("created", ascending=False).drop_duplicates("model").reset_index(drop=True)
 
     cls = table_[table_.model.isin(CLASSIFIERS)].copy()
     if not cls.empty:
@@ -920,7 +925,9 @@ def page_compare() -> None:
                             legend=alt.Legend(orient="bottom", title=None)))
         labels = base.mark_text(align="left", dx=6, fontSize=12).encode(
             text=alt.Text(f"{metric}:Q", format=".1%" if metric != "roc_auc" else ".3f"))
-        show_chart((bars + labels).properties(height=alt.Step(28)), f"Xếp hạng theo {CLS_METRICS[metric]} trên tập kiểm tra (cao nhất ở trên).")
+        show_chart((bars + labels).properties(height=alt.Step(28)),
+                   f"Xếp hạng theo {CLS_METRICS[metric]} trên tập kiểm tra (cao nhất ở trên)"
+                   + (", lần chạy mới nhất." if scope == "latest" else ", tất cả các lần chạy."))
 
         cls["Ghi chú"] = ["★ Tốt nhất" if (r, m) == best_key else "" for r, m in zip(cls.run_id, cls.model)]
         cls["Ghi chú"] = [(g + " · " if g else "") + "● Đang dùng" if (r, m) == active_key else g

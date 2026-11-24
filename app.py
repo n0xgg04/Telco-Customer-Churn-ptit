@@ -763,15 +763,16 @@ def model_params(default_balancing: str) -> dict:
     with tree_col, card():
         if st.checkbox("**Cây quyết định (Decision Tree)**", value=True, key="rt_use_tree"):
             chosen["decision_tree"] = {
-                "criterion": st.selectbox("Tiêu chí chia nhánh", ["gini", "entropy", "log_loss"], key="rt_tree_criterion"),
+                # Theo báo cáo (mục 4.3): criterion='gini'; min_samples_leaf giữ mặc định 1.
+                "criterion": st.selectbox("Tiêu chí chia nhánh", ["gini"], key="rt_tree_criterion", disabled=True),
                 "max_depth": st.slider("Độ sâu tối đa", 2, 12, 4, key="rt_tree_depth"),
-                "min_samples_leaf": st.number_input("Số mẫu tối thiểu ở lá", 1, 200, 1, key="rt_tree_leaf"),
+                "min_samples_leaf": 1,
                 "balancing": st.selectbox("Cân bằng lớp", list(BALANCING), index=4, format_func=BALANCING.get, key="rt_tree_bal"),
                 "features": st.radio("Đặc trưng", ["report", "all"], format_func={"report": "7 biến theo báo cáo", "all": "Tất cả"}.get, key="rt_tree_feat"),
             }
     with logit_col, card():
         if st.checkbox("**Hồi quy logistic (Logistic Regression)**", value=True, key="rt_use_logit"):
-            solver = st.selectbox("Solver", ["lbfgs", "liblinear", "newton-cg", "saga"], key="rt_logit_solver")
+            solver = st.selectbox("Solver", ["lbfgs", "liblinear", "saga"], key="rt_logit_solver")
             l1_ok = solver in ("liblinear", "saga")
             penalty = st.radio("Regularization", ["l2", "l1"] if l1_ok else ["l2"], horizontal=True, key=f"rt_logit_pen_{l1_ok}",
                                )
@@ -828,7 +829,7 @@ def page_train() -> None:
     params = model_params(cfg["method"])
     a, b, c = st.columns(3, gap="medium")
     test_size = a.slider("Tỷ lệ tập kiểm tra", 0.1, 0.4, cfg["test_size"], 0.05, key="rt_test")
-    seed_mode = b.radio("Seed", ["random", "fixed"], format_func={"random": "Ngẫu nhiên mỗi lần", "fixed": "Cố định"}.get,
+    seed_mode = b.radio("Seed", ["fixed", "random"], format_func={"fixed": "Cố định", "random": "Ngẫu nhiên mỗi lần"}.get,
                         horizontal=True, key="rt_seed_mode")
     seed = c.number_input("Giá trị seed", 0, 99_999, cfg["seed"], key="rt_seed", disabled=seed_mode == "random")
     if st.button("Huấn luyện", type="primary", disabled=not params, key="rt_go"):

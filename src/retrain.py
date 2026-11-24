@@ -92,7 +92,7 @@ def _classifier(name: str, params: dict, seed: int):
                                       min_samples_leaf=params["min_samples_leaf"],
                                       class_weight=weight, random_state=seed)
     penalty = params["penalty"]
-    return LogisticRegression(solver=params["solver"], C=params["C"], max_iter=3000,
+    return LogisticRegression(solver=params["solver"], C=params["C"], max_iter=2000,
                               class_weight=weight, random_state=seed,
                               **({"l1_ratio": 1.0} if penalty == "l1" else {}))
 

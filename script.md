@@ -112,12 +112,12 @@ Cấu hình chọn ở bước này được dùng làm mặc định cho Bướ
 
 ### Bước 3 · Huấn luyện
 
-**Thao tác:** Ở cả ba mô hình, chọn một thuật toán khác mặc định (ví dụ cây dùng entropy; hồi quy logistic dùng solver liblinear với penalty L1). Để *Seed = Ngẫu nhiên mỗi lần* rồi bấm **Huấn luyện** hai lần.
+**Thao tác:** Giữ mặc định (Seed = Cố định 42, đúng cấu hình báo cáo) và bấm **Huấn luyện**: kết quả khớp số liệu trong báo cáo. Sau đó đổi một tham số (ví dụ hồi quy logistic dùng solver liblinear với penalty L1, hoặc hồi quy tuyến tính dùng Ridge), chọn *Seed = Ngẫu nhiên mỗi lần* rồi bấm **Huấn luyện** thêm hai lần.
 
 **Nói:**
 - Ba mô hình nhóm chọn, mỗi mô hình có thuật toán riêng:
-  - **Cây quyết định (Decision Tree):** tiêu chí chia gini / entropy / log_loss, độ sâu tối đa, số mẫu tối thiểu ở lá.
-  - **Hồi quy logistic (Logistic Regression):** solver lbfgs / liblinear / newton-cg / saga; penalty L2 hoặc L1 (L1 chỉ có với liblinear và saga); C là nghịch đảo mức phạt.
+  - **Cây quyết định (Decision Tree):** tiêu chí chia nhánh gini (cố định theo báo cáo), chọn độ sâu tối đa (mặc định 4) và phương pháp cân bằng lớp.
+  - **Hồi quy logistic (Logistic Regression):** solver lbfgs / liblinear / saga; penalty L2 hoặc L1 (L1 chỉ có với liblinear và saga); C là nghịch đảo mức phạt.
   - **Hồi quy tuyến tính (Linear Regression):** OLS, Ridge (L2) hoặc Lasso (L1). Biến mục tiêu là MonthlyCharges, không phải Churn.
 - Cân bằng lớp nằm trong pipeline nên được làm lại trong từng fold CV, không rò rỉ sang dữ liệu đánh giá.
 - Seed ngẫu nhiên khiến mỗi lần chia tập huấn luyện / kiểm tra khác nhau, nên **hai lần bấm cho kết quả khác nhau**. Đây là lý do cần lưu và so sánh. Seed cố định cho kết quả giống hệt khi chạy lại.

@@ -532,61 +532,83 @@ RECORD_TABLE_HTML = """
   .nav .step { border-color: #d9dce1; background: #fff; color: #1a1a1a; }
   .nav .pos { color: #555b65; margin-left: 4px; }
   .wrap { position: relative; overflow: auto; border: 1px solid #d9dce1; border-radius: 4px; }
-  table { border-collapse: collapse; white-space: nowrap; }
-  th, td { padding: 4px 10px; border-bottom: 1px solid #eceef1; text-align: left; }
-  th { position: sticky; top: 0; background: #f4f5f7; font-weight: 600; z-index: 1; border-bottom: 1px solid #c9cdd3; }
+  table { border-collapse: collapse; table-layout: fixed; }
+  th, td { padding: 0 10px; height: 27px; border-bottom: 1px solid #eceef1; text-align: left;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  th { position: sticky; top: 0; background: #f4f5f7; font-weight: 600; z-index: 2; height: 30px;
+       border-bottom: 1px solid #c9cdd3; }
   td.n { color: #8a9099; text-align: right; }
-  .pin { position: sticky; background: #fff; z-index: 2; }
+  .pin { position: sticky; background: #fff; z-index: 1; }
   th.pin { z-index: 3; background: #f4f5f7; }
   .pin.last { box-shadow: 1px 0 0 #c9cdd3; }
+  tr.spacer td { padding: 0; border: 0; height: auto; }
   tr.bad td, tr.bad td.pin { background: #fdecec; color: #8c1d1d; }
   tr.bad td.reason { font-weight: 600; }
   tr.bad td.empty { outline: 2px solid #d64545; outline-offset: -2px; }
   td.empty::after { content: "(trống)"; font-style: italic; color: #c0392b; }
-  tr.flash td { animation: flash 1.4s ease-out; }
-  @keyframes flash { 0%, 40% { background: #f8c4c4; } 100% { background: #fdecec; } }
+  tr.flash td, tr.flash td.pin { background: #f8c4c4; transition: background 1.2s ease-out; }
 </style>
 <div class="nav" id="nav"></div>
-<div class="wrap" id="wrap"><table><thead id="head"></thead><tbody id="body"></tbody></table></div>
+<div class="wrap" id="wrap"><table id="tbl"><colgroup id="cg"></colgroup><thead id="head"></thead><tbody id="body"></tbody></table></div>
 <script>
+// Cuộn ảo: chỉ dựng các hàng đang nhìn thấy (+ đệm), nên bảng hàng nghìn record vẫn mượt.
 const data = __DATA__;
+const ROW_H = 28, HEAD_H = 31, OVERSCAN = 12, PINNED = 3;
+const rows = data.rows, ncol = data.cols.length + 1;
 const wrap = document.getElementById("wrap");
 wrap.style.height = (data.nav ? 440 : 420) + "px";
+const esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Độ rộng cột cố định, ước lượng từ chuỗi dài nhất (để cột không nhảy khi cuộn).
+const widths = new Array(ncol).fill(0);
+const headers = ["#", ...data.cols];
+headers.forEach((h, j) => widths[j] = h.length);
+for (const r of rows) for (let j = 0; j < ncol; j++) { const L = String(r[j]).length; if (L > widths[j]) widths[j] = L; }
+for (let j = 0; j < ncol; j++) widths[j] = Math.min(280, Math.max(44, Math.round(widths[j] * 8.2 + 26)));
+const lefts = []; let acc = 0; widths.forEach(w => { lefts.push(acc); acc += w; });
+const pinnedWidth = lefts[PINNED];
+document.getElementById("tbl").style.width = acc + "px";
+document.getElementById("cg").innerHTML = widths.map(w => `<col style="width:${w}px">`).join("");
+const pin = j => j < PINNED ? ` pin${j === PINNED - 1 ? " last" : ""}" style="left:${lefts[j]}px` : "";
 document.getElementById("head").innerHTML =
-  "<tr><th>#</th>" + data.cols.map(c => "<th></th>").join("") + "</tr>";
-document.querySelectorAll("#head th").forEach((th, i) => { if (i) th.textContent = data.cols[i - 1]; });
-const esc = v => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  "<tr>" + headers.map((h, j) => `<th class="${pin(j)}">${esc(h)}</th>`).join("") + "</tr>";
+
 const bad = [];
-const html = data.rows.map((r, i) => {
-  const isBad = r[1] !== "";
-  if (isBad) bad.push(i);
-  const cells = r.slice(1).map((v, j) => {
-    const cls = j === 0 ? "reason" : (isBad && v.trim() === "" ? "empty" : "");
-    return `<td class="${cls}">${esc(v)}</td>`;
+rows.forEach((r, i) => { if (r[1] !== "") bad.push(i); });
+let flashIdx = -1, frame = 0;
+const body = document.getElementById("body");
+
+function rowHtml(i) {
+  const r = rows[i], isBad = r[1] !== "";
+  const cells = r.map((v, j) => {
+    let cls = j === 0 ? "n" : j === 1 ? "reason" : (isBad && String(v).trim() === "" ? "empty" : "");
+    return `<td class="${cls}${pin(j)}">${esc(v)}</td>`;
   }).join("");
-  return `<tr id="r${i}" class="${isBad ? "bad" : ""}"><td class="n">${r[0]}</td>${cells}</tr>`;
-}).join("");
-document.getElementById("body").innerHTML = html;
-if (!data.rows.length) document.getElementById("body").innerHTML = "<tr><td>Không có record.</td></tr>";
-// Ghim 3 cột đầu (#, lý do, customerID) khi cuộn ngang.
-const firstRow = document.querySelector("#head tr");
-let left = 0;
-[0, 1, 2].forEach(c => {
-  const width = firstRow.children[c] ? firstRow.children[c].offsetWidth : 0;
-  document.querySelectorAll(`#head tr > :nth-child(${c + 1}), #body tr > :nth-child(${c + 1})`).forEach(el => {
-    el.classList.add("pin"); if (c === 2) el.classList.add("last"); el.style.left = left + "px";
-  });
-  left += width;
-});
+  return `<tr class="${isBad ? "bad" : ""}${i === flashIdx ? " flash" : ""}">${cells}</tr>`;
+}
+function render() {
+  frame = 0;
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="${ncol}">Không có record.</td></tr>`; return; }
+  const first = Math.max(0, Math.floor((wrap.scrollTop - HEAD_H) / ROW_H) - OVERSCAN);
+  const last = Math.min(rows.length, first + Math.ceil(wrap.clientHeight / ROW_H) + 2 * OVERSCAN);
+  let html = `<tr class="spacer"><td colspan="${ncol}" style="height:${first * ROW_H}px"></td></tr>`;
+  for (let i = first; i < last; i++) html += rowHtml(i);
+  html += `<tr class="spacer"><td colspan="${ncol}" style="height:${(rows.length - last) * ROW_H}px"></td></tr>`;
+  body.innerHTML = html;
+}
+wrap.addEventListener("scroll", () => { if (!frame) frame = requestAnimationFrame(render); });
+render();
+
 let at = -1;
 function go(k) {
   if (!bad.length) return;
   at = (k + bad.length) % bad.length;
-  const row = document.getElementById("r" + bad[at]);
-  wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
-  const empty = row.querySelector("td.empty");
-  wrap.scrollLeft = empty ? empty.offsetLeft - left - 40 : 0;
-  row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+  const i = bad[at];
+  wrap.scrollTop = HEAD_H + i * ROW_H - wrap.clientHeight / 2 + ROW_H / 2;
+  const emptyCol = rows[i].findIndex((v, j) => j > 1 && String(v).trim() === "");
+  wrap.scrollLeft = emptyCol > 0 ? Math.max(0, lefts[emptyCol] - pinnedWidth - 40) : 0;
+  flashIdx = i; render();
+  setTimeout(() => { if (flashIdx === i) { flashIdx = -1; render(); } }, 1400);
   document.getElementById("pos").textContent = `${at + 1}/${bad.length}`;
 }
 if (data.nav) {
@@ -599,8 +621,8 @@ if (data.nav) {
     document.getElementById("next").onclick = () => go(at + 1);
     bad.slice(0, 40).forEach((i, k) => {
       const b = document.createElement("button");
-      b.textContent = `#${data.rows[i][0]} · ${data.rows[i][2]}`;
-      b.title = data.rows[i][1];
+      b.textContent = `#${rows[i][0]} · ${rows[i][2]}`;
+      b.title = rows[i][1];
       b.onclick = () => go(k);
       nav.appendChild(b);
     });
